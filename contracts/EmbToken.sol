@@ -1,11 +1,10 @@
-pragma solidity 0.4.26;
+pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
-contract EmbToken is DetailedERC20, StandardToken, Ownable {
+contract EmbToken is DetailedERC20, Ownable {
 
   uint256 public supply;
 

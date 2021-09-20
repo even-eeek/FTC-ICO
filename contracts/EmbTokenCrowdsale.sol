@@ -1,20 +1,11 @@
-pragma solidity 0.4.26;
+pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-/* import "openzeppelin-solidity/contracts/token/ERC20/PausableToken.sol"; */
-/* import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol"; */
-/* import "openzeppelin-solidity/contracts/token/ERC20/TokenTimelock.sol"; */
-import "openzeppelin-solidity/contracts/crowdsale/Crowdsale.sol";
-import "openzeppelin-solidity/contracts/crowdsale/emission/MintedCrowdsale.sol";
 import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol";
-import "openzeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol";
-import "openzeppelin-solidity/contracts/crowdsale/validation/WhitelistedCrowdsale.sol";
-/* import "openzeppelin-solidity/contracts/crowdsale/distribution/RefundableCrowdsale.sol"; */
 import "openzeppelin-solidity/contracts/crowdsale/distribution/FinalizableCrowdsale.sol";
-/* import "openzeppelin-solidity/contracts/token/ERC20/TokenVesting.sol"; */
 
 import './MultiBeneficiaryTokenVesting.sol';
-contract EmbTokenCrowdsale is Crowdsale, CappedCrowdsale, TimedCrowdsale, WhitelistedCrowdsale, FinalizableCrowdsale {
+contract EmbTokenCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
 
   // Track investor contributions
   uint256 public investorMinCap =  200000000000000000; // 0.2 ether
@@ -24,7 +15,6 @@ contract EmbTokenCrowdsale is Crowdsale, CappedCrowdsale, TimedCrowdsale, Whitel
   mapping (uint256=> address ) private holders;
 
   uint256 totalHolders;
-  uint256 totalTokensSold;
 
   // Crowdsale Stages
   enum CrowdsaleStage { PreICO, ICO, PostICO }
@@ -60,16 +50,12 @@ contract EmbTokenCrowdsale is Crowdsale, CappedCrowdsale, TimedCrowdsale, Whitel
     address _wallet,
     ERC20 _token,
     uint256 _cap,
-    uint256 _openingTime,
-    uint256 _closingTime,
     address _foundationFund,
     address _liquidityAndMarketingFund,
     address _gameFund
   )
     Crowdsale(_rate, _wallet, _token)
     CappedCrowdsale(_cap)
-    TimedCrowdsale(_openingTime, _closingTime)
-    /*RefundableCrowdsale(_goal) */
     public
   {
     foundationFund = _foundationFund;
@@ -77,10 +63,6 @@ contract EmbTokenCrowdsale is Crowdsale, CappedCrowdsale, TimedCrowdsale, Whitel
     gameFund   = _gameFund;
     totalHolders = 0;
     token = _token;
-
-
-
-
   }
 
   /**
@@ -89,11 +71,18 @@ contract EmbTokenCrowdsale is Crowdsale, CappedCrowdsale, TimedCrowdsale, Whitel
    */
   function buyTokens(address _beneficiary) public  payable {
     require(CrowdsaleStage.PostICO != stage, "Trying to buy tokens when the PostICO stage is active");
+    require(CrowdsaleStage.PreICO == stage && weiRaised <= token.totalSupply().div(100).mul(3), "Trying to buy tokens in preICO when all token have been sold" );
+    require(CrowdsaleStage.ICO == stage && weiRaised <= token.totalSupply().div(10), "Trying to buy tokens in ICO when all token have been sold" );
 
     uint256 weiAmount = msg.value;
     _preValidatePurchase(_beneficiary, weiAmount);
     // update state
     weiRaised = weiRaised.add(weiAmount);
+    if(weiRaised >= token.totalSupply().div(100).mul(3) && CrowdsaleStage.PreICO == stage) {
+      stage = CrowdsaleStage.ICO;
+    } else if(weiRaised >= token.totalSupply().div(10) && CrowdsaleStage.ICO == stage) {
+      stage = CrowdsaleStage.PostICO;
+    }
   }
 
   /**
@@ -111,10 +100,11 @@ contract EmbTokenCrowdsale is Crowdsale, CappedCrowdsale, TimedCrowdsale, Whitel
   * @dev Allows admin to update the crowdsale stage
   * @param _stage Crowdsale stage
   */
-  function setCrowdsaleStage(uint _stage) public onlyOwner {
+  function incrementCrowdsaleStage(uint _stage) public onlyOwner {
     require(CrowdsaleStage.PostICO != stage, "Trying to set stage when the PostICO is active");
-    require(CrowdsaleStage.ICO != stage && (uint(CrowdsaleStage.PreICO) != _stage), "Trying to set stage to PreIco when ICO is active");
-    
+    /* require(CrowdsaleStage.ICO != stage && (uint(CrowdsaleStage.PreICO) != _stage), "Trying to set stage to PreIco when ICO is active"); */
+    require(uint(stage) == _stage + 1, "Trying to set stage incorectly");
+
     if(uint(CrowdsaleStage.PreICO) == _stage) {
       stage = CrowdsaleStage.PreICO;
     } else if (uint(CrowdsaleStage.ICO) == _stage) {
@@ -140,17 +130,6 @@ contract EmbTokenCrowdsale is Crowdsale, CappedCrowdsale, TimedCrowdsale, Whitel
   }
 
   /**
-   * @dev forwards funds to the wallet during the PreICO stage, then the refund vault during ICO stage
-   */
-  /* function _forwardFunds() internal {
-    if(stage == CrowdsaleStage.PreICO) {
-      wallet.transfer(msg.value);
-    } else if (stage == CrowdsaleStage.ICO) {
-      super._forwardFunds();
-    }
-  } */
-
-  /**
   * @dev Extend parent behavior requiring purchase to respect investor min/max funding cap.
   * @param _beneficiary Token purchaser
   * @param _weiAmount Amount of wei contributed
@@ -166,9 +145,8 @@ contract EmbTokenCrowdsale is Crowdsale, CappedCrowdsale, TimedCrowdsale, Whitel
     uint256 _newContribution = _existingContribution.add(_weiAmount);
     require(_newContribution >= investorMinCap && _newContribution <= investorHardCap);
     contributions[_beneficiary] = _newContribution;
-    totalTokensSold += _newContribution;
     holders[totalHolders] = _beneficiary;
-    totalHolders ++;
+    totalHolders.add(1);
   }
 
   /**
@@ -218,7 +196,7 @@ contract EmbTokenCrowdsale is Crowdsale, CappedCrowdsale, TimedCrowdsale, Whitel
         7 * 52 weeks
       );
 
-      uint256 remainingContribution = token.totalSupply() - totalTokensSold - foundationContribution - liquidityAndMarketingContribution;
+      uint256 remainingContribution = ((token.totalSupply().sub(weiRaised)).sub(foundationContribution)).sub(liquidityAndMarketingContribution);
 
       /* gameContribution = token.totalSupply().div(100) * gamePercentage * 10 ** 18; */
       gameVesting.addBeneficiary(gameFund, remainingContribution);

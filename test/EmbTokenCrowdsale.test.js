@@ -217,7 +217,7 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     });
 
     it('allows admin to update the stage to ICO', async function() {
-      await this.crowdsale.setCrowdsaleStage(this.icoStage, { from: _ });
+      await this.crowdsale.incrementCrowdsaleStage(this.icoStage, { from: _ });
       const stage = await this.crowdsale.stage();
       stage.should.be.bignumber.equal(new BN(this.icoStage));
       const rate = await this.crowdsale.rate();
@@ -225,28 +225,28 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     });
 
     it('allows admin to update the stage to PostICO', async function() {
-      await this.crowdsale.setCrowdsaleStage(this.postIcoStage, { from: _ });
+      await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: _ });
       const stage = await this.crowdsale.stage();
       stage.should.be.bignumber.equal(new BN(this.postIcoStage));
     });
 
     it('prevents admin from updating the stage to PreICO when ICO is active', async function () {
-      await this.crowdsale.setCrowdsaleStage(this.icoStage, { from: _ });
-      await this.crowdsale.setCrowdsaleStage(this.preIcoStage, { from: investor1 }).should.be.rejectedWith(EVMRevert);
+      await this.crowdsale.incrementCrowdsaleStage(this.icoStage, { from: _ });
+      await this.crowdsale.incrementCrowdsaleStage(this.preIcoStage, { from: investor1 }).should.be.rejectedWith(EVMRevert);
     });
 
     it('prevents admin from updating the stage to PreICO when PostICO is active', async function () {
-      await this.crowdsale.setCrowdsaleStage(this.postIcoStage, { from: _ });
-      await this.crowdsale.setCrowdsaleStage(this.preIcoStage, { from: investor1 }).should.be.rejectedWith(EVMRevert);
+      await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: _ });
+      await this.crowdsale.incrementCrowdsaleStage(this.preIcoStage, { from: investor1 }).should.be.rejectedWith(EVMRevert);
     });
 
     it('prevents admin from updating the stage to ICO when PostICO is active', async function () {
-      await this.crowdsale.setCrowdsaleStage(this.postIcoStage, { from: _ });
-      await this.crowdsale.setCrowdsaleStage(this.icoStage, { from: investor1 }).should.be.rejectedWith(EVMRevert);
+      await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: _ });
+      await this.crowdsale.incrementCrowdsaleStage(this.icoStage, { from: investor1 }).should.be.rejectedWith(EVMRevert);
     });
 
     it('prevents non-admin from updating the stage', async function () {
-      await this.crowdsale.setCrowdsaleStage(this.icoStage, { from: investor1 }).should.be.rejectedWith(EVMRevert);
+      await this.crowdsale.incrementCrowdsaleStage(this.icoStage, { from: investor1 }).should.be.rejectedWith(EVMRevert);
     });
 
 
@@ -341,11 +341,11 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
       await this.crowdsale.finalize({from: this.owner}).should.be.rejectedWith(EVMRevert);
     });
     it("calling finalize when ICO is active", async function()  {
-      await this.crowdsale.setCrowdsaleStage(this.icoStage, { from: this.owner });
+      await this.crowdsale.incrementCrowdsaleStage(this.icoStage, { from: this.owner });
       await this.crowdsale.finalize({from: this.owner}).should.be.rejectedWith(EVMRevert);
     })
     it("calling finalize when PostICO is active", async function()  {
-      await this.crowdsale.setCrowdsaleStage(this.postIcoStage, { from: this.owner });
+      await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: this.owner });
       await this.crowdsale.finalize({from: this.owner}).should.be.fulfilled;
     })
   })
@@ -362,7 +362,7 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
        console.log("investor2Balance")
        console.log(investor2Balance)
 
-       await this.crowdsale.setCrowdsaleStage(this.postIcoStage, { from: this.owner });
+       await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: this.owner });
        await this.crowdsale.finalize({from: this.owner}).should.be.fulfilled;
 
        increaseTimeTo(duration.days(29));
@@ -382,7 +382,7 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
        const investor2Balance = await this.token.balanceOf(investor2);
        console.log("investor2Balance")
        console.log(investor2Balance)
-       await this.crowdsale.setCrowdsaleStage(this.postIcoStage, { from: this.owner });
+       await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: this.owner });
        await this.crowdsale.finalize({from: this.owner}).should.be.fulfilled;
 
        increaseTimeTo(duration.days(31));

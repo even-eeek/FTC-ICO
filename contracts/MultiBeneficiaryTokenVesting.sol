@@ -1,6 +1,6 @@
-pragma solidity 0.4.26;
+pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -9,11 +9,11 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract MultiBeneficiaryTokenVesting is Ownable {
   using SafeMath for uint256;
-  using SafeERC20 for ERC20Basic;
+  using SafeERC20 for ERC20;
 
   event Released(address beneficiary, uint256 amount);
 
-  ERC20Basic public token;
+  ERC20 public token;
   uint256 public cliff;
   uint256 public start;
   uint256 public duration;
@@ -30,7 +30,7 @@ contract MultiBeneficiaryTokenVesting is Ownable {
   }
 
   constructor(
-    ERC20Basic _token,
+    ERC20 _token,
     uint256 _start,
     uint256 _cliff,
     uint256 _duration
