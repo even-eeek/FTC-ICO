@@ -1,5 +1,5 @@
 
-const DappToken = artifacts.require('DappToken');
+const EmbToken = artifacts.require('EmbToken');
 const { BN } = require('@openzeppelin/test-helpers');
 
 
@@ -7,13 +7,14 @@ require('chai')
   .should();
 
 
-contract('DappToken', accounts => {
+contract('EmbToken', accounts => {
   const _name = 'Dapp Token';
   const _symbol = 'DAPP';
   const _decimals = 18;
+  const _supply = 5000000000;
 
   beforeEach(async function () {
-    this.token = await DappToken.new(_name, _symbol, _decimals);
+    this.token = await EmbToken.new(_name, _symbol, _decimals, _supply);
   });
 
   describe('token attributes', function() {
@@ -31,5 +32,11 @@ contract('DappToken', accounts => {
       const decimals = await this.token.decimals();
       decimals.should.be.bignumber.equal(new BN(_decimals));
     });
+
+    it('has the correct supply', async function() {
+      const supply = await this.token.supply();
+      supply.should.be.bignumber.equal(new BN(_supply));
+    });
+
   });
 });

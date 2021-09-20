@@ -1,5 +1,5 @@
-const DappToken = artifacts.require("./DappToken.sol");
-const DappTokenCrowdsale = artifacts.require("./DappTokenCrowdsale.sol");
+const EmbToken = artifacts.require("./EmbToken.sol");
+const EmbTokenCrowdsale = artifacts.require("./EmbTokenCrowdsale.sol");
 
 const ether = (n) => new web3.utils.BN(web3.utils.toWei(n, 'ether'));
 
@@ -16,9 +16,10 @@ module.exports = async function(deployer, network, accounts) {
   const _name = "Ember Token";
   const _symbol = "EMB";
   const _decimals = 18;
+  const _supply = 5000000000;
 
-  await deployer.deploy(DappToken, _name, _symbol, _decimals);
-  const deployedToken = await DappToken.deployed();
+  await deployer.deploy(EmbToken, _name, _symbol, _decimals, _supply);
+  const deployedToken = await EmbToken.deployed();
 
   // const latestTime = (new Date).getTime();
 
@@ -53,10 +54,10 @@ module.exports = async function(deployer, network, accounts) {
   const _foundationFund = accounts[4]; // TODO: Replace me
   const _liquidityAndMarketingFund   = accounts[5]; // TODO: Replace me
   const _gameFund   = accounts[6]; // TODO: Replace me
-  const _releaseTime    = _closingTime + duration.days(1);
+  // const _releaseTime    = _closingTime + duration.days(1);
 
   await deployer.deploy(
-    DappTokenCrowdsale,
+    EmbTokenCrowdsale,
     _rate,
     _wallet,
     _token,
@@ -65,8 +66,8 @@ module.exports = async function(deployer, network, accounts) {
     _closingTime,
     _foundationFund,
     _liquidityAndMarketingFund,
-    _gameFund,
-    _releaseTime
+    _gameFund
+    // _releaseTime
   );
 
   return true;

@@ -1,9 +1,9 @@
 pragma solidity 0.4.26;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/TokenTimelock.sol";
+/* import "openzeppelin-solidity/contracts/token/ERC20/PausableToken.sol"; */
+/* import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol"; */
+/* import "openzeppelin-solidity/contracts/token/ERC20/TokenTimelock.sol"; */
 import "openzeppelin-solidity/contracts/crowdsale/Crowdsale.sol";
 import "openzeppelin-solidity/contracts/crowdsale/emission/MintedCrowdsale.sol";
 import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol";
@@ -11,13 +11,20 @@ import "openzeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol"
 import "openzeppelin-solidity/contracts/crowdsale/validation/WhitelistedCrowdsale.sol";
 /* import "openzeppelin-solidity/contracts/crowdsale/distribution/RefundableCrowdsale.sol"; */
 import "openzeppelin-solidity/contracts/crowdsale/distribution/FinalizableCrowdsale.sol";
+/* import "openzeppelin-solidity/contracts/token/ERC20/TokenVesting.sol"; */
 
-contract DappTokenCrowdsale is Crowdsale, MintedCrowdsale , CappedCrowdsale, TimedCrowdsale, WhitelistedCrowdsale, FinalizableCrowdsale {
+import './MultiBeneficiaryTokenVesting.sol';
+contract EmbTokenCrowdsale is Crowdsale, CappedCrowdsale, TimedCrowdsale, WhitelistedCrowdsale, FinalizableCrowdsale {
 
   // Track investor contributions
   uint256 public investorMinCap =  200000000000000000; // 0.2 ether
   uint256 public investorHardCap = 6000000000000000000; // 6 ether
+
   mapping(address => uint256) public contributions;
+  mapping (uint256=> address ) private holders;
+
+  uint256 totalHolders;
+  uint256 totalTokensSold;
 
   // Crowdsale Stages
   enum CrowdsaleStage { PreICO, ICO, PostICO }
@@ -41,6 +48,13 @@ contract DappTokenCrowdsale is Crowdsale, MintedCrowdsale , CappedCrowdsale, Tim
   address public liquidityAndMarketingTimelock;
   address public gameTimelock;
 
+  MultiBeneficiaryTokenVesting public tokenSaleVesting;
+  MultiBeneficiaryTokenVesting public foundationVesting;
+  MultiBeneficiaryTokenVesting public liquidityAndMarketingVesting;
+  MultiBeneficiaryTokenVesting public gameVesting;
+
+  ERC20 token;
+
   constructor(
     uint256 _rate,
     address _wallet,
@@ -50,8 +64,7 @@ contract DappTokenCrowdsale is Crowdsale, MintedCrowdsale , CappedCrowdsale, Tim
     uint256 _closingTime,
     address _foundationFund,
     address _liquidityAndMarketingFund,
-    address _gameFund,
-    uint256 _releaseTime
+    address _gameFund
   )
     Crowdsale(_rate, _wallet, _token)
     CappedCrowdsale(_cap)
@@ -62,7 +75,25 @@ contract DappTokenCrowdsale is Crowdsale, MintedCrowdsale , CappedCrowdsale, Tim
     foundationFund = _foundationFund;
     liquidityAndMarketingFund   = _liquidityAndMarketingFund;
     gameFund   = _gameFund;
-    releaseTime    = _releaseTime;
+    totalHolders = 0;
+    token = _token;
+
+
+
+
+  }
+
+  /**
+   * @dev low level token purchase ***DO NOT OVERRIDE***
+   * @param _beneficiary Address performing the token purchase
+   */
+  function buyTokens(address _beneficiary) public  payable {
+    require(CrowdsaleStage.PostICO != stage, "Trying to buy tokens when the PostICO stage is active");
+
+    uint256 weiAmount = msg.value;
+    _preValidatePurchase(_beneficiary, weiAmount);
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
   }
 
   /**
@@ -82,7 +113,8 @@ contract DappTokenCrowdsale is Crowdsale, MintedCrowdsale , CappedCrowdsale, Tim
   */
   function setCrowdsaleStage(uint _stage) public onlyOwner {
     require(CrowdsaleStage.PostICO != stage, "Trying to set stage when the PostICO is active");
-    require(CrowdsaleStage.ICO != stage && uint(CrowdsaleStage.PreICO) != _stage, "Trying to set stage to PreIco when ICO is active");
+    require(CrowdsaleStage.ICO != stage && (uint(CrowdsaleStage.PreICO) != _stage), "Trying to set stage to PreIco when ICO is active");
+    
     if(uint(CrowdsaleStage.PreICO) == _stage) {
       stage = CrowdsaleStage.PreICO;
     } else if (uint(CrowdsaleStage.ICO) == _stage) {
@@ -103,19 +135,20 @@ contract DappTokenCrowdsale is Crowdsale, MintedCrowdsale , CappedCrowdsale, Tim
   * @param _rate Crowdsale rate
   */
   function setCrowdsaleRate(uint _rate) public onlyOwner {
+    require(CrowdsaleStage.PostICO != stage, "Trying to set rate when the PostICO is active");
     rate = _rate;
   }
 
   /**
    * @dev forwards funds to the wallet during the PreICO stage, then the refund vault during ICO stage
    */
-  function _forwardFunds() internal {
+  /* function _forwardFunds() internal {
     if(stage == CrowdsaleStage.PreICO) {
       wallet.transfer(msg.value);
     } else if (stage == CrowdsaleStage.ICO) {
       super._forwardFunds();
     }
-  }
+  } */
 
   /**
   * @dev Extend parent behavior requiring purchase to respect investor min/max funding cap.
@@ -133,17 +166,78 @@ contract DappTokenCrowdsale is Crowdsale, MintedCrowdsale , CappedCrowdsale, Tim
     uint256 _newContribution = _existingContribution.add(_weiAmount);
     require(_newContribution >= investorMinCap && _newContribution <= investorHardCap);
     contributions[_beneficiary] = _newContribution;
+    totalTokensSold += _newContribution;
+    holders[totalHolders] = _beneficiary;
+    totalHolders ++;
   }
-
 
   /**
    * @dev enables token transfers, called when owner calls finalize()
   */
-  function finalization() internal {
+  function finalization() internal{
     require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
 
-    if(CrowdsaleStage.PostICO == stage) {
-      MintableToken _mintableToken = MintableToken(token);
+    tokenSaleVesting = new MultiBeneficiaryTokenVesting(
+       token,
+       block.timestamp,
+       30 days,
+       80 weeks
+     );
+
+     uint256 contribution;
+     for(uint i = 0 ; i < totalHolders; i++) {
+         address beneficiary = holders[i];
+         contribution = contributions[beneficiary];
+         tokenSaleVesting.addBeneficiary(beneficiary, contribution);
+     }
+
+     foundationVesting  = new MultiBeneficiaryTokenVesting(
+        token,
+        block.timestamp,
+        30 days,
+        90 days
+      );
+
+      uint256 foundationContribution = token.totalSupply().div(100) * foundationPercentage * 10 ** 18;
+      foundationVesting.addBeneficiary(foundationFund, foundationContribution);
+
+     liquidityAndMarketingVesting = new MultiBeneficiaryTokenVesting(
+        token,
+        block.timestamp,
+        0 days,
+        0 days
+      );
+
+      uint256 liquidityAndMarketingContribution = token.totalSupply().div(100) * liquidityAndMarketingPercentage * 10 ** 18;
+      liquidityAndMarketingVesting.addBeneficiary(liquidityAndMarketingFund, liquidityAndMarketingContribution);
+
+     gameVesting  = new MultiBeneficiaryTokenVesting(
+        token,
+        block.timestamp,
+        52 weeks,
+        7 * 52 weeks
+      );
+
+      uint256 remainingContribution = token.totalSupply() - totalTokensSold - foundationContribution - liquidityAndMarketingContribution;
+
+      /* gameContribution = token.totalSupply().div(100) * gamePercentage * 10 ** 18; */
+      gameVesting.addBeneficiary(gameFund, remainingContribution);
+      super.finalization();
+  }
+
+  /**
+   * @dev enables token releaseVestedFunds
+  */
+  function releaseVestedFunds() internal {
+    require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
+
+    tokenSaleVesting.releaseAllTokens();
+    foundationVesting.releaseAllTokens();
+    liquidityAndMarketingVesting.releaseAllTokens();
+    gameVesting.releaseAllTokens();
+
+
+      /* MintableToken _mintableToken = MintableToken(token);
       uint256 _alreadyMinted = _mintableToken.totalSupply();
 
       uint256 _finalTotalSupply = _alreadyMinted.div(tokenSalePercentage).mul(100);
@@ -158,9 +252,8 @@ contract DappTokenCrowdsale is Crowdsale, MintedCrowdsale , CappedCrowdsale, Tim
 
       _mintableToken.finishMinting();
       // Unpause the token
-    }
+      */
 
-    super.finalization();
   }
 
 }

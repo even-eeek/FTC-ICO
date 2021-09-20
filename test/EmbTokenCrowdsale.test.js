@@ -9,11 +9,11 @@ require('chai')
   .use(require('chai-as-promised'))
   .should();
 
-const DappToken = artifacts.require('DappToken');
-const DappTokenCrowdsale = artifacts.require('DappTokenCrowdsale');
-// const TokenTimelock = artifacts.require('./TokenTimelock');
+const EmbToken = artifacts.require('EmbToken');
+const EmbTokenCrowdsale = artifacts.require('EmbTokenCrowdsale');
+// const MultiBeneficiaryTokenVesting = artifacts.require("MultiBeneficiaryTokenVesting");
 
-contract('DappTokenCrowdsale', function([_, wallet, investor1, investor2, foundationFund, liquidityAndMarketingFund,  gameFund]) {
+contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundationFund, liquidityAndMarketingFund,  gameFund]) {
 
 
   before(async function() {
@@ -23,26 +23,6 @@ contract('DappTokenCrowdsale', function([_, wallet, investor1, investor2, founda
 
 
   beforeEach(async function () {
-    // Token config
-    this.name = "Ember Token";
-    this.symbol = "EMB";
-    this.decimals = 18;
-
-    // Deploy Token
-    this.token = await DappToken.new(
-      this.name,
-      this.symbol,
-      this.decimals
-    );
-
-
-
-
-    // Crowdsale config
-    this.rate = 45000; //42000 EMB for 1 eth
-    this.wallet = wallet;
-    // this.cap = ether("100");
-    this.cap = ether('11111');
 
     const latestBlock = await web3.eth.getBlockNumber();
     var tempLatestTime;// = await web3.eth.getBlock(latestBlock).timestamp;
@@ -56,6 +36,53 @@ contract('DappTokenCrowdsale', function([_, wallet, investor1, investor2, founda
          console.error(error);
        }
     })
+
+    this.owner = _;
+   //  this.tokenVesting;
+   //  this.vestingSettings  = {
+   //   start: tempLatestTime,
+   //   cliff: duration.days(30),
+   //   duration: 3 * duration.days(30),
+   // };
+
+
+    // Token config
+    this.name = "Ember Token";
+    this.symbol = "EMB";
+    this.decimals = 18;
+    this.supply = 5000000000;
+
+    // Deploy Token
+    this.token = await EmbToken.new(
+      this.name,
+      this.symbol,
+      this.decimals,
+      this.supply
+    );
+
+    // this.tokenVesting = await MultiBeneficiaryTokenVesting.new(
+    //    this.token.address,
+    //    this.vestingSettings.start,
+    //    this.vestingSettings.cliff,
+    //    this.vestingSettings.duration,
+    //  );
+     // .then((instance) => {
+     //   this.tokenVesting = instance;
+     // });
+
+
+
+
+
+
+
+    // Crowdsale config
+    this.rate = 45000; //42000 EMB for 1 eth
+    this.wallet = wallet;
+    // this.cap = ether("100");
+    this.cap = ether('11111');
+
+
 
     this.openingTime = tempLatestTime + duration.weeks(1);
     this.closingTime = this.openingTime + duration.weeks(1);
@@ -99,7 +126,7 @@ contract('DappTokenCrowdsale', function([_, wallet, investor1, investor2, founda
     console.log(this.token.address)
 
 
-    this.crowdsale = await DappTokenCrowdsale.new(
+    this.crowdsale = await EmbTokenCrowdsale.new(
       this.rate,
       this.wallet,
       this.token.address,
@@ -108,13 +135,20 @@ contract('DappTokenCrowdsale', function([_, wallet, investor1, investor2, founda
       this.closingTime,
       this.foundationFund,
       this.liquidityAndMarketingFund,
-      this.gameFund,
-      this.releaseTime
+      this.gameFund
+      // this.releaseTime
     );
 
-    //
-    // // Transfer token ownership to crowdsale
+
+     // let tokenVestingAddress = this.tokenVesting.address;
+     const totalOwnerSupply = await this.token.balanceOf(this.owner)
+
+     // Transfer token to Vesting Address
+     await this.token.transfer(this.crowdsale.address, totalOwnerSupply,  { from: this.owner });
+
+     // Transfer token ownership to crowdsale
     await this.token.transferOwnership(this.crowdsale.address);
+    // await this.tokenVesting.transferOwnership(this.crowdsale.address);
 
     // // Add investors to whitelist
     await this.crowdsale.addManyToWhitelist([investor1, investor2]);
@@ -144,14 +178,6 @@ contract('DappTokenCrowdsale', function([_, wallet, investor1, investor2, founda
     });
   });
 
-  describe('minted crowdsale', function() {
-    it('mints tokens after purchase', async function() {
-      const originalTotalSupply = await this.token.totalSupply();
-      await this.crowdsale.sendTransaction({ value: ether('1'), from: investor1 });
-      const newTotalSupply = await this.token.totalSupply();
-      assert.isTrue(newTotalSupply > originalTotalSupply);
-    });
-  });
   //
   describe('capped crowdsale', async function() {
     it('has the correct hard cap', async function() {
@@ -247,7 +273,6 @@ contract('DappTokenCrowdsale', function([_, wallet, investor1, investor2, founda
     });
   });
 
-
   describe('buyTokens()', function() {
     describe('when the contribution is less than the minimum cap', function() {
       it('rejects the transaction', async function() {
@@ -278,141 +303,13 @@ contract('DappTokenCrowdsale', function([_, wallet, investor1, investor2, founda
       await this.crowdsale.buyTokens(investor1, { value: value2, from: investor1 }).should.be.rejectedWith(EVMRevert);
     });
   });
-  //
+
   describe('when the contribution is within the valid range', function () {
     const value = ether('2');
     it('succeeds & updates the contribution amount', async function () {
       await this.crowdsale.buyTokens(investor2, { value: value, from: investor2 }).should.be.fulfilled;
       const contribution = await this.crowdsale.getUserContribution(investor2);
       contribution.should.be.bignumber.equal(value);
-    });
-  });
-
-
-  describe('finalizing the crowdsale', function() {
-  //   describe('when the stage is not postICO', async function() {
-  //     beforeEach(async function () {
-  //       // Do not meet the toal
-  //       await this.crowdsale.buyTokens(investor2, { value: ether('1'), from: investor2 });
-  //       // Fastforward past end time
-  //       await increaseTimeTo(this.closingTime + 1);
-  //       // Finalize the crowdsale
-  //       await this.crowdsale.finalize({ from: _ });
-  //     });
-  //
-  //     it('prevent finalization when stage is not postICO ', async function () {
-  //     await this.crowdsale.finalization( { from: _ }).should.be.rejectedWith(EVMRevert);
-  //     });
-  //
-  //   });
-  //
-  //
-    describe('when the stage is postICO', function() {
-      beforeEach(async function () {
-        // track current wallet balance
-        this.walletBalance = await web3.eth.getBalance(wallet);
-
-        // Meet the goal
-        await this.crowdsale.buyTokens(investor1, { value: ether('5'), from: investor1 });
-        await this.crowdsale.buyTokens(investor2, { value: ether('5'), from: investor2 });
-
-        await this.crowdsale.setCrowdsaleStage(this.postIcoStage, { from: _ });
-        // Fastforward past end time
-        await increaseTimeTo(this.closingTime + 1);
-        // Finalize the crowdsale
-        await this.crowdsale.finalize({ from: _ });
-      });
-
-      it('handles postICO', async function () {
-
-        // Finishes minting token
-        const mintingFinished = await this.token.mintingFinished();
-        mintingFinished.should.be.true;
-
-        // Enables token transfers
-        await this.token.transfer(investor2, 1, { from: investor2 }).should.be.fulfilled;
-
-        let totalSupply = await this.token.totalSupply();
-        totalSupply = totalSupply.toString();
-
-        // liquidityAndMarketing
-        const liquidityAndMarketingTimelockAddress = await this.crowdsale.liquidityAndMarketingTimelock();
-        let liquidityAndMarketingTimelockBalance = await this.token.balanceOf(liquidityAndMarketingTimelockAddress);
-        liquidityAndMarketingTimelockBalance = liquidityAndMarketingTimelockBalance.toString();
-        liquidityAndMarketingTimelockBalance = new BN(liquidityAndMarketingTimelockBalance);// / (10 ** this.decimals);
-
-        let liquidityAndMarketingAmount = totalSupply / this.liquidityAndMarketingPercentage;
-        liquidityAndMarketingAmount = liquidityAndMarketingAmount.toString();
-        liquidityAndMarketingAmount = new BN(liquidityAndMarketingAmount);// / (10 ** this.decimals);
-
-        assert.equal(liquidityAndMarketingTimelockBalance.toString(), liquidityAndMarketingAmount.toString());
-
-        // Foundation
-        const foundationTimelockAddress = await this.crowdsale.foundationTimelock();
-        let foundationTimelockBalance = await this.token.balanceOf(foundationTimelockAddress);
-        foundationTimelockBalance = foundationTimelockBalance.toString();
-        foundationTimelockBalance = foundationTimelockBalance / (10 ** this.decimals);
-
-        let foundationAmount = totalSupply / this.foundationPercentage;
-        foundationAmount = foundationAmount.toString();
-        foundationAmount = foundationAmount / (10 ** this.decimals);
-
-        assert.equal(foundationTimelockBalance.toString(), foundationAmount.toString());
-
-        // game
-        const gameTimelockAddress = await this.crowdsale.gameTimelock();
-        let gameTimelockBalance = await this.token.balanceOf(gameTimelockAddress);
-        gameTimelockBalance = gameTimelockBalance.toString();
-        gameTimelockBalance = gameTimelockBalance / (10 ** this.decimals);
-
-        let gameAmount = totalSupply / this.gamePercentage;
-        gameAmount = gameAmount.toString();
-        gameAmount = gameAmount / (10 ** this.decimals);
-
-        assert.equal(gameTimelockBalance.toString(), gameAmount.toString());
-
-        // Can't withdraw from timelocks
-        const liquidityAndMarketingTimelock = await TokenTimelock.at(liquidityAndMarketingTimelockAddress);
-        await liquidityAndMarketingTimelock.release().should.be.rejectedWith(EVMRevert);
-
-        const foundationTimelock = await TokenTimelock.at(foundationTimelockAddress);
-        await foundationTimelock.release().should.be.rejectedWith(EVMRevert);
-
-        const gameTimelock = await TokenTimelock.at(gameTimelockAddress);
-        await gameTimelock.release().should.be.rejectedWith(EVMRevert);
-
-        // Can withdraw from timelocks
-        await increaseTimeTo(this.releaseTime + 1);
-
-        await liquidityAndMarketingTimelock.release().should.be.fulfilled;
-        await foundationTimelock.release().should.be.fulfilled;
-        await gameTimelock.release().should.be.fulfilled;
-
-        // Funds now have balances
-
-        // liquidityAndMarketing
-        let liquidityAndMarketingBalance = await this.token.balanceOf(this.liquidityAndMarketingFund);
-        liquidityAndMarketingBalance = liquidityAndMarketingBalance.toString();
-        liquidityAndMarketingBalance = liquidityAndMarketingBalance / (10 ** this.decimals);
-
-        assert.equal(liquidityAndMarketingBalance.toString(), liquidityAndMarketingAmount.toString());
-
-        // Foundation
-        let foundationBalance = await this.token.balanceOf(this.foundationFund);
-        foundationBalance = foundationBalance.toString();
-        foundationBalance = foundationBalance / (10 ** this.decimals);
-
-        assert.equal(foundationBalance.toString(), foundationAmount.toString());
-
-        // game
-        let gameBalance = await this.token.balanceOf(this.gameFund);
-        gameBalance = gameBalance.toString();
-        gameBalance = gameBalance / (10 ** this.decimals);
-
-        assert.equal(gameBalance.toString(), gameAmount.toString());
-
-      });
-
     });
   });
 
@@ -438,4 +335,65 @@ contract('DappTokenCrowdsale', function([_, wallet, investor1, investor2, founda
       total.should.equal(100);
     });
   });
+
+  describe('finalize', function() {
+    it("calling finalize when PreICO is active", async function()  {
+      await this.crowdsale.finalize({from: this.owner}).should.be.rejectedWith(EVMRevert);
+    });
+    it("calling finalize when ICO is active", async function()  {
+      await this.crowdsale.setCrowdsaleStage(this.icoStage, { from: this.owner });
+      await this.crowdsale.finalize({from: this.owner}).should.be.rejectedWith(EVMRevert);
+    })
+    it("calling finalize when PostICO is active", async function()  {
+      await this.crowdsale.setCrowdsaleStage(this.postIcoStage, { from: this.owner });
+      await this.crowdsale.finalize({from: this.owner}).should.be.fulfilled;
+    })
+  })
+
+  describe('token Vesting', function() {
+
+     it("doesn't release in PostICO before cliff", async function()  {
+       await this.crowdsale.buyTokens(investor1, { value: ether('1'), from: investor1 })
+       const investor1Balance = await this.token.balanceOf(investor1);
+       console.log("investor1Balance")
+       console.log(investor1Balance)
+       await this.crowdsale.buyTokens(investor2, { value: ether('1'), from: investor2 })
+       const investor2Balance = await this.token.balanceOf(investor2);
+       console.log("investor2Balance")
+       console.log(investor2Balance)
+
+       await this.crowdsale.setCrowdsaleStage(this.postIcoStage, { from: this.owner });
+       await this.crowdsale.finalize({from: this.owner}).should.be.fulfilled;
+
+       increaseTimeTo(duration.days(29));
+       await this.crowdsale.releaseAllTokens();
+
+       investor1Balance.should.be.bignumber.eq(new BN(0), 'investor 1 has correct 0 balance');
+       investor2Balance.should.be.bignumber.eq(new BN(0), 'investor 2 has correct 0 balance');
+
+     });
+
+     it("release tokens in PostICO after cliff", async function()  {
+       await this.crowdsale.buyTokens(investor1, { value: ether('1'), from: investor1 })
+       const investor1Balance = await this.token.balanceOf(investor1);
+       console.log("investor1Balance")
+       console.log(investor1Balance)
+       await this.crowdsale.buyTokens(investor2, { value: ether('2'), from: investor2 })
+       const investor2Balance = await this.token.balanceOf(investor2);
+       console.log("investor2Balance")
+       console.log(investor2Balance)
+       await this.crowdsale.setCrowdsaleStage(this.postIcoStage, { from: this.owner });
+       await this.crowdsale.finalize({from: this.owner}).should.be.fulfilled;
+
+       increaseTimeTo(duration.days(31));
+       await this.crowdsale.releaseAllTokens();
+       //5% from 45000 (1 eth) = 2250
+       investor1Balance.should.be.bignumber.eq(new BN(2250), 'investor 1 has correct 0 balance');
+
+       //5% from 45000 (2 eth) = 5000
+       investor2Balance.should.be.bignumber.eq(new BN(5000), 'investor 2 has correct 0 balance');
+     });
+
+  });
+
 });
