@@ -38,13 +38,6 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     })
 
     this.owner = _;
-   //  this.tokenVesting;
-   //  this.vestingSettings  = {
-   //   start: tempLatestTime,
-   //   cliff: duration.days(30),
-   //   duration: 3 * duration.days(30),
-   // };
-
 
     // Token config
     this.name = "Ember Token";
@@ -60,32 +53,14 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
       this.supply
     );
 
-    // this.tokenVesting = await MultiBeneficiaryTokenVesting.new(
-    //    this.token.address,
-    //    this.vestingSettings.start,
-    //    this.vestingSettings.cliff,
-    //    this.vestingSettings.duration,
-    //  );
-     // .then((instance) => {
-     //   this.tokenVesting = instance;
-     // });
-
-
-
-
-
-
-
     // Crowdsale config
     this.rate = 45000; //42000 EMB for 1 eth
     this.wallet = wallet;
     // this.cap = ether("100");
     this.cap = ether('11111');
 
-
-
-    this.openingTime = tempLatestTime + duration.weeks(1);
-    this.closingTime = this.openingTime + duration.weeks(1);
+    // this.openingTime = tempLatestTime + duration.weeks(1);
+    // this.closingTime = this.openingTime + duration.weeks(1);
 
 
     // this.goal = ether("50");
@@ -93,7 +68,7 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     this.liquidityAndMarketingFund = liquidityAndMarketingFund;
     this.foundationFund = foundationFund;
     this.gameFund = gameFund;
-    this.releaseTime  = this.closingTime + duration.years(1);
+    // this.releaseTime  = this.closingTime + duration.years(1);
 
 
     // Investor caps
@@ -131,8 +106,8 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
       this.wallet,
       this.token.address,
       this.cap,
-      this.openingTime,
-      this.closingTime,
+      // this.openingTime,
+      // this.closingTime,
       this.foundationFund,
       this.liquidityAndMarketingFund,
       this.gameFund
@@ -151,7 +126,7 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     // await this.tokenVesting.transferOwnership(this.crowdsale.address);
 
     // // Add investors to whitelist
-    await this.crowdsale.addManyToWhitelist([investor1, investor2]);
+    // await this.crowdsale.addManyToWhitelist([investor1, investor2]);
     // await this.crowdsale.addToWhitelist(investor1);
 
     // // Advance time to crowdsale start
@@ -186,23 +161,42 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     });
   });
   //
-  describe('timed crowdsale', function() {
-    it('is open', async function() {
-      const isClosed = await this.crowdsale.hasClosed();
-      isClosed.should.be.false;
-    });
-  });
+  // describe('timed crowdsale', function() {
+  //   it('is open', async function() {
+  //     const isClosed = await this.crowdsale.hasClosed();
+  //     isClosed.should.be.false;
+  //   });
+  // });
+  // //
+  // describe('whitelisted crowdsale', function() {
+  //   it('rejects contributions from non-whitelisted investors', async function() {
+  //     const notWhitelisted = _;
+  //     await this.crowdsale.buyTokens(notWhitelisted, { value: ether('1'), from: notWhitelisted }).should.be.rejectedWith(EVMRevert);
+  //   });
   //
-  describe('whitelisted crowdsale', function() {
-    it('rejects contributions from non-whitelisted investors', async function() {
-      const notWhitelisted = _;
-      await this.crowdsale.buyTokens(notWhitelisted, { value: ether('1'), from: notWhitelisted }).should.be.rejectedWith(EVMRevert);
+  //   it('accepts contributions from whitelisted investors', async function() {
+  //     await this.crowdsale.buyTokens(investor1, { value: ether('1'), from: investor1 }).should.be.fulfilled;
+  //   });
+  // });
+
+  describe('crowdsale pause', async function() {
+    it("should be able to call pauseTokenSale() by the owner of tokenSale", async () => {
+
+        await this.crowdsale.pauseTokenSale({ from: this.investor1 }).should.be.rejectedWith(EVMRevert);
+
+        assert.equal(true, await this.crowdsale.tokenSalePaused());
     });
 
-    it('accepts contributions from whitelisted investors', async function() {
-      await this.crowdsale.buyTokens(investor1, { value: ether('1'), from: investor1 }).should.be.fulfilled;
+    it("should be able to call unpauseTokenSale() by the owner of tokenSale", async () => {
+        await this.crowdsale.pauseTokenSale({ from: this.owner }).should.be.fulfilled;
+        assert.equal(true, await tokenSale.tokenSalePaused());
+
+        await tokenSale.unpauseTokenSale({ from: accounts[0] }).should.be.rejectedWith(EVMRevert);;
+
+        await this.crowdsale.unpauseTokenSale({ from: this.owner }).should.be.fulfilled;
+        assert.equal(false, await tokenSale.tokenSalePaused());
     });
-  });
+  })
 
   describe('crowdsale stages', function() {
 
@@ -350,50 +344,50 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     })
   })
 
-  describe('token Vesting', function() {
-
-     it("doesn't release in PostICO before cliff", async function()  {
-       await this.crowdsale.buyTokens(investor1, { value: ether('1'), from: investor1 })
-       const investor1Balance = await this.token.balanceOf(investor1);
-       console.log("investor1Balance")
-       console.log(investor1Balance)
-       await this.crowdsale.buyTokens(investor2, { value: ether('1'), from: investor2 })
-       const investor2Balance = await this.token.balanceOf(investor2);
-       console.log("investor2Balance")
-       console.log(investor2Balance)
-
-       await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: this.owner });
-       await this.crowdsale.finalize({from: this.owner}).should.be.fulfilled;
-
-       increaseTimeTo(duration.days(29));
-       await this.crowdsale.releaseAllTokens();
-
-       investor1Balance.should.be.bignumber.eq(new BN(0), 'investor 1 has correct 0 balance');
-       investor2Balance.should.be.bignumber.eq(new BN(0), 'investor 2 has correct 0 balance');
-
-     });
-
-     it("release tokens in PostICO after cliff", async function()  {
-       await this.crowdsale.buyTokens(investor1, { value: ether('1'), from: investor1 })
-       const investor1Balance = await this.token.balanceOf(investor1);
-       console.log("investor1Balance")
-       console.log(investor1Balance)
-       await this.crowdsale.buyTokens(investor2, { value: ether('2'), from: investor2 })
-       const investor2Balance = await this.token.balanceOf(investor2);
-       console.log("investor2Balance")
-       console.log(investor2Balance)
-       await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: this.owner });
-       await this.crowdsale.finalize({from: this.owner}).should.be.fulfilled;
-
-       increaseTimeTo(duration.days(31));
-       await this.crowdsale.releaseAllTokens();
-       //5% from 45000 (1 eth) = 2250
-       investor1Balance.should.be.bignumber.eq(new BN(2250), 'investor 1 has correct 0 balance');
-
-       //5% from 45000 (2 eth) = 5000
-       investor2Balance.should.be.bignumber.eq(new BN(5000), 'investor 2 has correct 0 balance');
-     });
-
-  });
+  // describe('token Vesting', function() {
+  //
+  //    it("doesn't release in PostICO before cliff", async function()  {
+  //      await this.crowdsale.buyTokens(investor1, { value: ether('1'), from: investor1 })
+  //      const investor1Balance = await this.token.balanceOf(investor1);
+  //      console.log("investor1Balance")
+  //      console.log(investor1Balance)
+  //      await this.crowdsale.buyTokens(investor2, { value: ether('1'), from: investor2 })
+  //      const investor2Balance = await this.token.balanceOf(investor2);
+  //      console.log("investor2Balance")
+  //      console.log(investor2Balance)
+  //
+  //      await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: this.owner });
+  //      await this.crowdsale.finalize({from: this.owner}).should.be.fulfilled;
+  //
+  //      increaseTimeTo(duration.days(29));
+  //      await this.crowdsale.releaseAllTokens();
+  //
+  //      investor1Balance.should.be.bignumber.eq(new BN(0), 'investor 1 has correct 0 balance');
+  //      investor2Balance.should.be.bignumber.eq(new BN(0), 'investor 2 has correct 0 balance');
+  //
+  //    });
+  //
+  //    it("release tokens in PostICO after cliff", async function()  {
+  //      await this.crowdsale.buyTokens(investor1, { value: ether('1'), from: investor1 })
+  //      const investor1Balance = await this.token.balanceOf(investor1);
+  //      console.log("investor1Balance")
+  //      console.log(investor1Balance)
+  //      await this.crowdsale.buyTokens(investor2, { value: ether('2'), from: investor2 })
+  //      const investor2Balance = await this.token.balanceOf(investor2);
+  //      console.log("investor2Balance")
+  //      console.log(investor2Balance)
+  //      await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: this.owner });
+  //      await this.crowdsale.finalize({from: this.owner}).should.be.fulfilled;
+  //
+  //      increaseTimeTo(duration.days(31));
+  //      await this.crowdsale.releaseAllTokens();
+  //      //5% from 45000 (1 eth) = 2250
+  //      investor1Balance.should.be.bignumber.eq(new BN(2250), 'investor 1 has correct 0 balance');
+  //
+  //      //5% from 45000 (2 eth) = 5000
+  //      investor2Balance.should.be.bignumber.eq(new BN(5000), 'investor 2 has correct 0 balance');
+  //    });
+  //
+  // });
 
 });

@@ -23,22 +23,45 @@ uint256 _amount: 5000000000
 
 - There are 3 stages: enum CrowdsaleStage { PreICO, ICO, PostICO }
 
-	* In PreIco, the rate is $0.01 for 1 EMB i.e. 36900 EMB for 1 BNB (At the time of writing. The rate will be ajusted constantly for BNB price). The limit is 3% of totalSupply i.e. 150000000.
-	* In Ico, the rate is $0.03 for 1 EMB i.e. 12300 EMB for 1 BNB (At the time of writing. The rate will be ajusted constantly for BNB price). The limit is 7% of totalSupply i.e. 350000000.
+	* In PreIco, the rate is $0.01 for 1 EMB i.e. 36900 EMB for 1 BNB (At the time of writing. The rate will be ajusted constantly for BNB price). The limit is 3% of totalSupply i.e. 150000000. Any remaining tokens in PreICO will be available in ICO.
+	* In Ico, the rate is $0.03 for 1 EMB i.e. 12300 EMB for 1 BNB (At the time of writing. The rate will be ajusted constantly for BNB price). The limit is 7% of totalSupply i.e. 350000000. Any remaining tokens in ICO will be sent to GameVesting Contract.
 	* in PostIco, the tokenBuy will be disabled
 
 - There is a investorMinCap =  200000000000000000 wei (0.2 BNB) and investorHardCap = 6000000000000000000 wei (6 BNB).
 
 - The contract has 3 important variables to keep the state of each investor and the contributed amount:
-	* uint256 totalHolders -> a variables that holds the total number of investors. 
+	* uint256 totalHolders -> a variables that holds the total number of investors.
 	* mapping (uint256=> address) holders -> a mapping to determine the nth investor
 	* mapping (address => uint256)  contributions -> a mapping to determine the contributed amount for an investor
 
-	Example:  Amount contributed by the 3rd investor 
+	Example:  Amount contributed by the 3rd investor
 				 address beneficiary = holders[2];
 				 uint256 contribution = contributions[beneficiary];
-				 
-				 
+- Vesting
+	* The liquidityAndMarketingFund (10% of totalSupply) will be immediately transfered after the ICO.
+	    m_token.safeTransfer(liquidityAndMarketingFund, LIQUIDITY_AND_MARKETING_SHARE);
 
-	
+  * The Vesting Contract constructor has 2 fields:
+		ERC20Basic _token -> our EmbToken
+		uint256 _totalFunds -> total tokens for vesting contract
 
+	* When a beneficiary is added to a vesting contract, these are the fields that need to be filled up:
+		address _beneficiary,
+		uint256 _start,
+		uint256 _cliff,
+		uint256 _duration,
+		uint256 _amount
+
+		All users from the token sale will be part of the same TokenVestingPool Contract, called 'tokenSaleEscrow' with the following arguments:
+			beneficiary, block.timestamp, 30 days, 600 days, contribution
+
+		The Foundation Vesting will be split between 2 vesting contract, because the plan is to first vest 1% each month for 10 months and then vest 5% each month for 18 months, as follows:
+			foundationEscrow1 = new TokenVestingPool(m_token, 50000000);
+	    foundationEscrow1.addBeneficiary(foundationFund, block.timestamp, 30 days, 300 days, 50000000);
+	    foundationEscrow2 = new TokenVestingPool(m_token, 450000000);
+	    foundationEscrow2.addBeneficiary(foundationFund, 40 weeks, 1 days, 540 days, 450000000);
+
+		The Game Vesting contract will contain the 70% of total supply plus the remaining tokens from the PreICO and ICO:
+			uint256 gameConstribution = (((m_token.totalSupply().sub(m_weiRaised)).sub(FCHAIN_FOUNDATION_SHARE_1)).sub(FCHAIN_FOUNDATION_SHARE_2)).sub(LIQUIDITY_AND_MARKETING_SHARE);
+			gameEscrow = new TokenVestingPool(m_token, gameConstribution);
+			gameEscrow.addBeneficiary(gameFund, block.timestamp, 30 days, 2555 days, gameConstribution);

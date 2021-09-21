@@ -50,11 +50,12 @@ module.exports = async function(deployer, network, accounts) {
 
 
   const _cap            = ether('11111');
-  const _goal           = ether('50');
+  // const _goal           = ether('50');
   const _foundationFund = accounts[4]; // TODO: Replace me
   const _liquidityAndMarketingFund   = accounts[5]; // TODO: Replace me
   const _gameFund   = accounts[6]; // TODO: Replace me
   // const _releaseTime    = _closingTime + duration.days(1);
+
 
   await deployer.deploy(
     EmbTokenCrowdsale,
@@ -62,12 +63,9 @@ module.exports = async function(deployer, network, accounts) {
     _wallet,
     _token,
     _cap,
-    _openingTime,
-    _closingTime,
     _foundationFund,
     _liquidityAndMarketingFund,
     _gameFund
-    // _releaseTime
   );
 
   return true;
