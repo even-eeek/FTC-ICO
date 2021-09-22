@@ -34,6 +34,7 @@
     "truffle-hdwallet-provider": "^1.0.17"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2",
     "@openzeppelin/test-helpers": "^0.5.13",
     "bn.js": "^5.2.0",
     "chai": "^4.3.4",

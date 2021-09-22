@@ -1,9 +1,9 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.8.0;
 
-import "openzeppelin-solidity/contracts/ownership/Claimable.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/TokenVesting.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./OZ_legacy/Claimable.sol";
+import "./OZ_legacy/TokenVesting.sol";
 
 
 /**
@@ -18,11 +18,11 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
  * avoid refills done by transferring tokens through the ERC20.
  */
 contract TokenVestingPool is Claimable {
-  using SafeERC20 for ERC20Basic;
+  using SafeERC20 for ERC20;
   using SafeMath for uint256;
 
   // ERC20 token being held
-  ERC20Basic public token;
+  ERC20 public token;
 
   // Maximum amount of tokens to be distributed
   uint256 public totalFunds;
@@ -58,9 +58,9 @@ contract TokenVestingPool is Claimable {
    *        beneficiaries.
    */
   constructor(
-    ERC20Basic _token,
+    ERC20 _token,
     uint256 _totalFunds
-  ) public validAddress(_token) {
+  ) validAddress(address(_token)) {
     require(_totalFunds > 0);
 
     token = _token;
@@ -78,12 +78,12 @@ contract TokenVestingPool is Claimable {
    * @return address for the new TokenVesting contract instance.
    */
   function addBulkBeneficiary(
-    address[] _beneficiary,
+    address[] memory _beneficiary,
     uint256 _start,
     uint256 _cliff,
     uint256 _duration,
-    uint256[] _amount
-  ) public onlyOwner validAddress(_beneficiary) returns (address) {
+    uint256[] memory _amount
+  ) public onlyOwner returns (address) {
     require(_beneficiary.length == _amount.length);
     for(uint256 i = 0 ; i < _beneficiary.length; i++) {
       addBeneficiary(_beneficiary[i], _start, _cliff, _duration, _amount[i]);
@@ -127,7 +127,7 @@ contract TokenVestingPool is Claimable {
     uint256 _duration,
     uint256 _amount
   ) public onlyOwner validAddress(_beneficiary) returns (address) {
-    require(_beneficiary != owner);
+    require(_beneficiary != owner());
     require(_amount > 0);
     require(_duration >= _cliff);
 
@@ -142,7 +142,7 @@ contract TokenVestingPool is Claimable {
     // Bookkepping of distributed tokens
     distributedTokens = distributedTokens.add(_amount);
 
-    address tokenVesting = new TokenVesting(
+    TokenVesting tokenVesting = new TokenVesting(
       _beneficiary,
       _start,
       _cliff,
@@ -151,14 +151,14 @@ contract TokenVestingPool is Claimable {
     );
 
     // Bookkeeping of distributions contracts per beneficiary
-    beneficiaryDistributionContracts[_beneficiary].push(tokenVesting);
-    distributionContracts[tokenVesting] = true;
+    beneficiaryDistributionContracts[_beneficiary].push(address(tokenVesting));
+    distributionContracts[address(tokenVesting)] = true;
 
     // Assign the tokens to the beneficiary
-    token.safeTransfer(tokenVesting, _amount);
+    token.safeTransfer(address(tokenVesting), _amount);
 
-    emit BeneficiaryAdded(_beneficiary, tokenVesting, _amount);
-    return tokenVesting;
+    emit BeneficiaryAdded(_beneficiary, address(tokenVesting), _amount);
+    return address(tokenVesting);
   }
 
   /**
@@ -168,7 +168,7 @@ contract TokenVestingPool is Claimable {
    */
   function getDistributionContracts(
     address _beneficiary
-  ) public view validAddress(_beneficiary) returns (address[]) {
+  ) public view validAddress(_beneficiary) returns (address[] memory) {
     return beneficiaryDistributionContracts[_beneficiary];
   }
 

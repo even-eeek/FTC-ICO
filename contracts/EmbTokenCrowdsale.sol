@@ -1,14 +1,15 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.0;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol";
-import "openzeppelin-solidity/contracts/crowdsale/distribution/FinalizableCrowdsale.sol";
-/* import "openzeppelin-solidity/contracts/crowdsale/validation/PausableCrowdsale.sol"; */
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+/* import "./OZ_legacy/CappedCrowdsale.sol"; */
+import "./OZ_legacy/Crowdsale.sol";
+/* import "./OZ_legacy/FinalizableCrowdsale.sol"; */
 import './TokenVestingPool.sol';
 
-contract EmbTokenCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
+contract EmbTokenCrowdsale is Crowdsale, Ownable { //}, CappedCrowdsale, FinalizableCrowdsale {
   using SafeMath for uint256;
   using SafeERC20 for ERC20;
   // Track investor contributions
@@ -20,7 +21,7 @@ contract EmbTokenCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
 
   bool public tokenSalePaused = false;
   uint256 totalHolders = 0;
-  uint256 m_weiRaised;
+  /* uint256 weiRaised; */
   uint256 m_rate;
   ERC20 m_token;
 
@@ -70,17 +71,17 @@ contract EmbTokenCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
 
   constructor(
     uint256 _rate,
-    address _wallet,
+    address payable _wallet,
     ERC20 _token,
     uint256 _cap,
     address _foundationFund,
     address _liquidityAndMarketingFund,
     address _gameFund
   )
-    Crowdsale(_rate, _wallet, _token)
-    CappedCrowdsale(_cap)
+    Crowdsale(_rate, _wallet, _token, _cap)
+    /* CappedCrowdsale(_cap) */
     /* FinalizableCrowdsale() */
-    public
+
   {
     foundationFund = _foundationFund;
     liquidityAndMarketingFund   = _liquidityAndMarketingFund;
@@ -104,10 +105,10 @@ contract EmbTokenCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
    * @dev low level token purchase ***DO NOT OVERRIDE***
    * @param _beneficiary Address performing the token purchase
    */
-  function buyTokens(address _beneficiary) public payable {
+  function buyTokens(address _beneficiary) public override payable {
     require(CrowdsaleStage.PostICO != stage, "Trying to buy tokens when the PostICO stage is active");
-    require(CrowdsaleStage.PreICO == stage && m_weiRaised <= m_token.totalSupply().div(100).mul(3), "Trying to buy tokens in preICO when all token have been sold" );
-    require(CrowdsaleStage.ICO == stage && m_weiRaised <= m_token.totalSupply().div(10), "Trying to buy tokens in ICO when all token have been sold" );
+    require(CrowdsaleStage.PreICO == stage && weiRaised <= m_token.totalSupply().div(100).mul(3), "Trying to buy tokens in preICO when all token have been sold" );
+    require(CrowdsaleStage.ICO == stage && weiRaised <= m_token.totalSupply().div(10), "Trying to buy tokens in ICO when all token have been sold" );
 
     uint256 weiAmount = msg.value;
     _preValidatePurchase(_beneficiary, weiAmount);
@@ -120,10 +121,10 @@ contract EmbTokenCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
     totalHolders.add(1);
 
     // update state
-    m_weiRaised = m_weiRaised.add(weiAmount);
-    if(m_weiRaised >= m_token.totalSupply().div(100).mul(3) && CrowdsaleStage.PreICO == stage) {
+    weiRaised = weiRaised.add(weiAmount);
+    if(weiRaised >= m_token.totalSupply().div(100).mul(3) && CrowdsaleStage.PreICO == stage) {
       stage = CrowdsaleStage.ICO;
-    } else if(m_weiRaised >= m_token.totalSupply().div(10) && CrowdsaleStage.ICO == stage) {
+    } else if(weiRaised >= m_token.totalSupply().div(10) && CrowdsaleStage.ICO == stage) {
       stage = CrowdsaleStage.PostICO;
     }
   }
@@ -181,7 +182,7 @@ contract EmbTokenCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
   /**
    * @dev enables token transfers, called when owner calls finalize()
   */
-  function _finalization() internal {
+  function postICOhandling() public {
     require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
 
 
@@ -193,7 +194,7 @@ contract EmbTokenCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
     foundationEscrow2.addBeneficiary(foundationFund, 40 weeks, 1 days, 540 days, FCHAIN_FOUNDATION_SHARE_2);
 
 
-    tokenSaleEscrow = new TokenVestingPool(m_token, m_weiRaised);
+    tokenSaleEscrow = new TokenVestingPool(m_token, weiRaised);
     //address[] memory benecificiaries = new address[](totalHolders);
     //uint256[] memory amounts  = new uint256[](totalHolders);
     for(uint256 i = 0 ; i < totalHolders; i++) {
@@ -205,12 +206,12 @@ contract EmbTokenCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
     }
     //tokenSaleEscrow.addBulkBeneficiary(benecificiaries, block.timestamp, 30 days, 600 days, amounts);
 
-    uint256 gameConstribution = (((m_token.totalSupply().sub(m_weiRaised)).sub(FCHAIN_FOUNDATION_SHARE_1)).sub(FCHAIN_FOUNDATION_SHARE_2)).sub(LIQUIDITY_AND_MARKETING_SHARE);
+    uint256 gameConstribution = (((m_token.totalSupply().sub(weiRaised)).sub(FCHAIN_FOUNDATION_SHARE_1)).sub(FCHAIN_FOUNDATION_SHARE_2)).sub(LIQUIDITY_AND_MARKETING_SHARE);
     gameEscrow = new TokenVestingPool(m_token, gameConstribution);
     gameEscrow.addBeneficiary(gameFund, block.timestamp, 30 days, 2555 days, gameConstribution);
 
 
-    super.finalize();
+    /* super.finalize(); */
   }
 
   /**
