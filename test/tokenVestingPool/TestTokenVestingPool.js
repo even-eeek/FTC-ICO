@@ -35,7 +35,7 @@ contract('TokenVestingPool', (accounts) => {
   });
 
   beforeEach(async () => {
-    start = now();
+    start = await now();
     token = await ERC20Token.new("Ember Token", "EMB", 18, 5000000000000000, { from: owner });
 
     let ownerBalance = await token.balanceOf(owner);
