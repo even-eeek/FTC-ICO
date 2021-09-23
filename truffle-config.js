@@ -9,11 +9,15 @@ module.exports = {
       host: 'localhost',
       port: 8545,
       network_id: '*',
+      gas: 4712388,
+      gasPrice: 1000000000,
     },
     ganache: {
       host: 'localhost',
       port: 8545,
       network_id: '*',
+      gas: 4712388,
+      gasPrice: 1000000000,
     },
     ropsten: {
       provider: function() {
@@ -22,8 +26,8 @@ module.exports = {
           `https://ropsten.infura.io/${process.env.INFURA_API_KEY}`
         )
       },
-      gas: 5000000,
-      gasPrice: 25000000000,
+      gas: 4712388,
+      gasPrice: 100000000,
       network_id: 3
     }
   },

@@ -38,10 +38,10 @@ contract EmbTokenCrowdsale is Ownable {
   enum CrowdsaleStage { PreICO, ICO, PostICO }
   CrowdsaleStage public stage = CrowdsaleStage.PreICO;
 
-  TokenVestingPool foundationEscrow1;
-  TokenVestingPool foundationEscrow2;
+  TokenVesting foundationEscrow1;
+  TokenVesting foundationEscrow2;
   TokenVestingPool tokenSaleEscrow;
-  TokenVestingPool gameEscrow;
+  TokenVesting gameEscrow;
 
   address public liquidityAndMarketingFund;
   address public foundationFund;
@@ -225,13 +225,34 @@ contract EmbTokenCrowdsale is Ownable {
 
     token.safeTransfer(liquidityAndMarketingFund, LIQUIDITY_AND_MARKETING_SHARE);
 
-    foundationEscrow1 = new TokenVestingPool(token, FCHAIN_FOUNDATION_SHARE_1);
+    /* foundationEscrow1 = new TokenVestingPool(token, FCHAIN_FOUNDATION_SHARE_1);
     token.safeTransfer(address(foundationEscrow1), FCHAIN_FOUNDATION_SHARE_1);
-    foundationEscrow1.addBeneficiary(foundationFund, block.timestamp, 30 days, 300 days, FCHAIN_FOUNDATION_SHARE_1);
+    foundationEscrow1.addBeneficiary(foundationFund, block.timestamp, 30 days, 300 days, FCHAIN_FOUNDATION_SHARE_1); */
 
-    foundationEscrow2 = new TokenVestingPool(token, FCHAIN_FOUNDATION_SHARE_2);
+    foundationEscrow1 = new TokenVesting(
+      foundationFund,
+      block.timestamp,
+      30 days,
+      300 days,
+      false // TokenVesting cannot be revoked
+    );
+
+    token.safeTransfer(address(foundationEscrow1), FCHAIN_FOUNDATION_SHARE_1);
+
+    /* foundationEscrow2 = new TokenVestingPool(token, FCHAIN_FOUNDATION_SHARE_2);
     token.safeTransfer(address(foundationEscrow2), FCHAIN_FOUNDATION_SHARE_2);
-    foundationEscrow2.addBeneficiary(foundationFund, 40 weeks, 1 days, 540 days, FCHAIN_FOUNDATION_SHARE_2);
+    foundationEscrow2.addBeneficiary(foundationFund, 40 weeks, 1 days, 540 days, FCHAIN_FOUNDATION_SHARE_2); */
+
+    foundationEscrow2 = new TokenVesting(
+      foundationFund,
+      block.timestamp + 300 days,
+      1 days,
+      540 days,
+      false // TokenVesting cannot be revoked
+    );
+
+    token.safeTransfer(address(foundationEscrow2), FCHAIN_FOUNDATION_SHARE_2);
+
 
     tokenSaleEscrow = new TokenVestingPool(token, totalSaleTokens);
     token.safeTransfer(address(tokenSaleEscrow), totalSaleTokens);
@@ -253,9 +274,20 @@ contract EmbTokenCrowdsale is Ownable {
     gameConstribution = gameConstribution.sub(FCHAIN_FOUNDATION_SHARE_2);
     gameConstribution = gameConstribution.sub(LIQUIDITY_AND_MARKETING_SHARE);
 
-    gameEscrow = new TokenVestingPool(token, gameConstribution);
+    gameEscrow = new TokenVesting(
+      gameFund,
+      block.timestamp,
+      30 days,
+      2555 days,
+      false // TokenVesting cannot be revoked
+    );
+
     token.safeTransfer(address(gameEscrow), gameConstribution);
-    gameEscrow.addBeneficiary(gameFund, block.timestamp, 30 days, 2555 days, gameConstribution);
+
+
+  /*  gameEscrow = new TokenVestingPool(token, gameConstribution);
+    token.safeTransfer(address(gameEscrow), gameConstribution);
+    gameEscrow.addBeneficiary(gameFund, block.timestamp, 30 days, 2555 days, gameConstribution); */
 
     _forwardFunds();
   }
@@ -263,15 +295,13 @@ contract EmbTokenCrowdsale is Ownable {
   function getFoundationVestedContract1() public view returns (address ) {
     require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
 
-    address[] memory addressFoundationEscrow1 = foundationEscrow1.getDistributionContracts(foundationFund);
-    return addressFoundationEscrow1[0];
+    return address(foundationEscrow1);
   }
 
   function getFoundationVestedContract2() public view returns (address ) {
     require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
 
-    address[] memory addressFoundationEscrow2 = foundationEscrow2.getDistributionContracts(foundationFund);
-    return addressFoundationEscrow2[0];
+    return address(foundationEscrow2);
   }
 
   function getTokenSaleVestedContract(address beneficiary) public view returns (address ){
@@ -284,8 +314,7 @@ contract EmbTokenCrowdsale is Ownable {
   function getGameVestedContract() public view returns (address ) {
     require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
 
-    address[] memory addressGameEscrow = gameEscrow.getDistributionContracts(gameFund);
-    return addressGameEscrow[0];
+    return address(gameEscrow);
   }
 
   function showFoundationVestedFunds1() public view returns (uint256) {
