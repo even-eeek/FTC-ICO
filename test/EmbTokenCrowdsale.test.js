@@ -171,14 +171,14 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
 
     it('allows admin to update the rate', async function() {
       let newRate = 55000;
-      await this.crowdsale.setCrowdsaleRate(newRate, { from: this.owner });
+      await this.crowdsale.updateCrowdsaleRate(newRate, { from: this.owner });
       const rate = await this.crowdsale.rate();
       rate.should.be.bignumber.equal(new BN(newRate));
     });
 
     it('prevents non-admin from updating the rate', async function () {
       let newRate = 65000;
-      await this.crowdsale.setCrowdsaleRate(newRate, { from: investor1 }).should.be.rejectedWith(EVMRevert);
+      await this.crowdsale.updateCrowdsaleRate(newRate, { from: investor1 }).should.be.rejectedWith(EVMRevert);
     });
 
   });
