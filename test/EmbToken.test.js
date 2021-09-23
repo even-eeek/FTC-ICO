@@ -34,8 +34,9 @@ contract('EmbToken', accounts => {
     });
 
     it('has the correct supply', async function() {
-      const supply = await this.token.supply();
-      supply.should.be.bignumber.equal(new BN(_supply));
+      const supply = await this.token.totalSupply();
+      const newSupply = _supply * Math.pow(10,_decimals);
+      supply.should.be.bignumber.equal('5000000000000000000000000000');
     });
 
   });

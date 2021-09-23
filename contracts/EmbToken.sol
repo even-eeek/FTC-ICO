@@ -1,15 +1,13 @@
 pragma solidity ^0.8.0;
 
-import "./OZ_legacy/DetailedERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-contract EmbToken is ERC20  {
+contract EmbToken is ERC20, Ownable  {
   using SafeMath for uint256;
 
-  uint256 public supply;
-  mapping(address => uint256) public balances;  // corrected
   constructor(
     string memory _name,
     string memory _symbol,
@@ -17,7 +15,6 @@ contract EmbToken is ERC20  {
     uint256 _amount
   )
     ERC20(_name, _symbol)
-
   {
     require(_amount > 0, "amount has to be greater than 0");
     uint256 totalSupply_ = _amount.mul(10 ** uint256(_decimals));

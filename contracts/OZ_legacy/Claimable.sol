@@ -26,15 +26,7 @@ contract Claimable is Ownable {
    */
   function transferOwnership(address newOwner) override onlyOwner public {
     pendingOwner = newOwner;
+    /* emit OwnershipTransferred(owner(), pendingOwner); */
+    super.transferOwnership(newOwner);
   }
-
-  /**
-   * @dev Allows the pendingOwner address to finalize the transfer.
-   */
-  /* function claimOwnership() onlyPendingOwner public {
-    _setOwner(pendingOwner);
-    OwnershipTransferred(owner(), pendingOwner);
-    owner = pendingOwner;
-    pendingOwner = address(0);
-  } */
 }

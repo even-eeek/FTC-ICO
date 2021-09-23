@@ -39,8 +39,6 @@ contract('TokenVestingPool', (accounts) => {
     token = await ERC20Token.new("Ember Token", "EMB", 18, 5000000000000000, { from: owner });
 
     let ownerBalance = await token.balanceOf(owner);
-    // console.log("owner balance AT START!!!!!!!!!!")
-    // console.log(ownerBalance)
 
   });
 
@@ -75,8 +73,6 @@ contract('TokenVestingPool', (accounts) => {
     beforeEach(async () => {
       contract = await TokenVestingPool.new(token.address, 500000000, { from: owner });
       let ownerBalance = await token.balanceOf(owner);
-      // console.log("owner balance")
-      // console.log(ownerBalance)
 
       await token.transfer(contract.address, 500000000);
     });
@@ -125,7 +121,7 @@ contract('TokenVestingPool', (accounts) => {
 
     it('does not add a beneficiary when the amount of tokens to distribute is more than the total funds', async () => {
       try {
-        await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 100000000, {
+        await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 500000001, {
           from: owner,
         }).should.be.rejectedWith(EVMRevert);
         //assert.fail();
@@ -160,34 +156,12 @@ contract('TokenVestingPool', (accounts) => {
     });
 
     it('adds a beneficiary to the token pool', async () => {
-      console.log("start")
-      console.log(start)
-      console.log("oneDay")
-      console.log(oneDay)
-      console.log("oneWeek")
-      console.log(oneWeek)
 
-      var decimalPlaces = 18;
-
-      var amount = ethers.utils.parseUnits('10000', decimalPlaces);
-      console.log("amount")
-      console.log(amount)
-      // BigNumber { _bn: <BN: 10f0cf064dd59200000> }
-
-      var string = ethers.utils.formatUnits(amount, decimalPlaces);
-     console.log("string")
-     console.log(string)
-
-        const tx = await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, amount, {
+        const tx = await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1000000, {
         from: owner,
-      });
+      }).should.be.fulfilled;
 
-      console.log("tx")
-      console.log(tx)
-
-      const result = contact.getDistributionContracts(beneficiary1);
-      console.log("result")
-      console.log(result)
+      const result = contract.getDistributionContracts(beneficiary1);
 
       // assertEvent(tx, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
       //
@@ -196,7 +170,7 @@ contract('TokenVestingPool', (accounts) => {
     });
 
     it('adds a beneficiary even if the start date precedes the invocation of this method', async () => {
-      const tx = await contract.addBeneficiary(beneficiary1, start - oneWeek, oneDay, oneWeek, new BN(1000000), {
+      const tx = await contract.addBeneficiary(beneficiary1, start - oneWeek, oneDay, oneWeek, 1000000, {
         from: owner,
       }).should.be.fulfilled;
       assertEvent(tx, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
@@ -211,7 +185,7 @@ contract('TokenVestingPool', (accounts) => {
       }).should.be.fulfilled;
       assertEvent(tx1, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
 
-      const tx2 = await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, '1.5e10', {
+      const tx2 = await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1000000, {
         from: owner,
       }).should.be.fulfilled;
       assertEvent(tx2, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
@@ -220,9 +194,9 @@ contract('TokenVestingPool', (accounts) => {
       assert.equal(status, 1, 'Could not add vesting contract');
     });
 
-    it('new owner adds a beneficiary after claiming ownership', async () => {
+    it('new owner adds a beneficiary after transfering ownership', async () => {
       await contract.transferOwnership(newOwner, { from: owner });
-      await contract.claimOwnership({ from: newOwner });
+      // await contract.claimOwnership({ from: newOwner });
 
       const tx = await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1000000, {
         from: newOwner,
@@ -233,17 +207,17 @@ contract('TokenVestingPool', (accounts) => {
       assert.equal(status, 1, 'Could not add beneficiary');
     });
 
-    it('adds a beneficiary after transferring ownership if it has not been claimed', async () => {
-      await contract.transferOwnership(newOwner, { from: owner });
-
-      const tx = await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1000000, {
-        from: owner,
-      }).should.be.fulfilled;
-      assertEvent(tx, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
-
-      const { receipt: { status } } = tx;
-      assert.equal(status, 1, 'Could not add beneficiary');
-    });
+    // it('adds a beneficiary from old owner after transferring ownership to new owner', async () => {
+    //   await contract.transferOwnership(newOwner, { from: owner });
+    //
+    //   const tx = await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1000000, {
+    //     from: owner,
+    //   }).should.be.rejectedWith(EVMRevert);
+    //   assertEvent(tx, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
+    //
+    //   const { receipt: { status } } = tx;
+    //   assert.equal(status, 1, 'Could not add beneficiary');
+    // });
 
     it('previous owner cannot add a beneficiary after the new owner claims ownership', async () => {
       await contract.transferOwnership(newOwner, { from: owner });
@@ -303,7 +277,8 @@ contract('TokenVestingPool', (accounts) => {
     it('does updates beneficiary distribution contracts mapping after adding a beneficiary', async () => {
       const contractAddress = await contract.beneficiaryDistributionContracts(beneficiary1, 0);
       const contracts = await contract.getDistributionContracts(beneficiary1);
-      const vestingBeneficiary = await TokenVesting.at(contractAddress).beneficiary();
+      const vestingContract = await TokenVesting.at(contractAddress);
+      const vestingBeneficiary = await vestingContract.beneficiary();
       assert.equal(contracts.length, 1, 'Distribution contracts list should have one element');
       assert.equal(contractAddress, contracts[0], 'Distribution contracts list should have mapping content');
       assert.equal(vestingBeneficiary, beneficiary1, 'Distribution contract does not belong to beneficiary');
@@ -364,8 +339,8 @@ contract('TokenVestingPool', (accounts) => {
       await increaseTime(oneDay * 2);
 
       const contracts = await contract.getDistributionContracts(beneficiary1);
-      const vestingContract0 = TokenVesting.at(contracts[0]);
-      const vestingContract1 = TokenVesting.at(contracts[1]);
+      const vestingContract0 = await TokenVesting.at(contracts[0]);
+      const vestingContract1 = await TokenVesting.at(contracts[1]);
 
       assert.equal(await vestingContract0.revocable(), false, 'TokenVesting contract should not be revocable');
       assert.equal(await vestingContract1.revocable(), false, 'TokenVesting contract should not be revocable');
@@ -375,10 +350,13 @@ contract('TokenVestingPool', (accounts) => {
       await vestingContract1.release(token.address);
       const balanceAfter = await token.balanceOf.call(beneficiary1);
 
+      const difference = balanceAfter - balanceBefore;
+
       // the first is released entirely (10000000 tokens)
-      // the second releases one out of seven days (10000000 / 7 ~= 14 tokens)
-      // the third releases one out of seven days (10000000 / 7 ~= 14 tokens)
-      assert.ok(balanceAfter.minus(balanceBefore).greaterThan(BigNumber('1.28e+11')));
+      // the second releases one out of seven days (10000000 / 7 ~= 1,428,571 tokens)
+      // the third releases one out of seven days (10000000 / 7 ~= 1,428,571 tokens)
+
+      assert.ok(difference > 12800000);
     });
 
 
@@ -386,16 +364,16 @@ contract('TokenVestingPool', (accounts) => {
       const tx1 = await contract.addBeneficiary(beneficiary1, start, oneWeek, oneWeek, 1000000, { from: owner });
       assertEvent(tx1, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
 
-      const tx2 = await contract.addBeneficiary(beneficiary1, start, oneMonth, oneMonth, '3e+10', { from: owner });
+      const tx2 = await contract.addBeneficiary(beneficiary1, start, oneMonth, oneMonth, 3000000, { from: owner });
       assertEvent(tx2, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
 
-      const tx3 = await contract.addBeneficiary(beneficiary1, start, oneMonth * 3, oneMonth * 3, '6e+10', { from: owner });
+      const tx3 = await contract.addBeneficiary(beneficiary1, start, oneMonth * 3, oneMonth * 3, 6000000, { from: owner });
       assertEvent(tx3, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
 
       const contracts = await contract.getDistributionContracts(beneficiary1);
 
       // 1 week
-      let tokenVesting = TokenVesting.at(contracts[0]);
+      let tokenVesting = await TokenVesting.at(contracts[0]);
       // Travel to one hour before the cliff period ends.
       await increaseTime(oneWeek - oneHour);
 
@@ -413,10 +391,13 @@ contract('TokenVestingPool', (accounts) => {
       const balanceBefore = await token.balanceOf.call(beneficiary1);
       await tokenVesting.release(token.address);
       let balanceAfterCliff = await token.balanceOf.call(beneficiary1);
-      assert.ok(balanceAfterCliff.minus(balanceBefore).eq(BigNumber(1000000)));
+
+      let difference = balanceAfterCliff - balanceBefore;
+
+      assert.ok(difference == 1000000);
 
       // 1 month
-      tokenVesting = TokenVesting.at(contracts[1]);
+      tokenVesting = await TokenVesting.at(contracts[1]);
       // Travel to one hour before the cliff period ends.
       await increaseTime(oneMonth - oneWeek - oneHour);
 
@@ -432,10 +413,12 @@ contract('TokenVestingPool', (accounts) => {
       await increaseTime(oneHour);
       await tokenVesting.release(token.address);
       balanceAfterCliff = await token.balanceOf.call(beneficiary1);
-      assert.ok(balanceAfterCliff.minus(balanceBefore).eq(BigNumber('4e+10')));
+
+      difference = balanceAfterCliff - balanceBefore;
+      assert.ok(difference == 4000000);
 
       // 3 months
-      tokenVesting = TokenVesting.at(contracts[2]);
+      tokenVesting = await TokenVesting.at(contracts[2]);
       // Travel to one hour before the cliff period ends.
       await increaseTime(oneMonth * 2 - oneHour);
 
@@ -451,12 +434,14 @@ contract('TokenVestingPool', (accounts) => {
       await increaseTime(oneHour);
       await tokenVesting.release(token.address);
       balanceAfterCliff = await token.balanceOf.call(beneficiary1);
-      assert.ok(balanceAfterCliff.minus(balanceBefore).eq(BigNumber(10000000)));
+
+      difference = balanceAfterCliff - balanceBefore;
+      assert.ok(difference == 10000000);
     });
 
     it('transfers the corresponding tokens in a 33%-33%-33% scheme', async () => {
-      contract = await TokenVestingPool.new(token.address, '3e+10', { from: owner });
-      await token.transfer(contract.address, '3e+10');
+      contract = await TokenVestingPool.new(token.address, 3000000, { from: owner });
+      await token.transfer(contract.address, 3000000);
 
       const tx1 = await contract.addBeneficiary(beneficiary1, start, oneMonth, oneMonth, 1000000, { from: owner });
       assertEvent(tx1, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
@@ -470,7 +455,7 @@ contract('TokenVestingPool', (accounts) => {
       const contracts = await contract.getDistributionContracts(beneficiary1);
 
       // 1 month
-      let tokenVesting = TokenVesting.at(contracts[0]);
+      let tokenVesting = await TokenVesting.at(contracts[0]);
       // Travel to one hour before the cliff period ends.
       await increaseTime(oneMonth - oneHour);
 
@@ -488,10 +473,12 @@ contract('TokenVestingPool', (accounts) => {
       const balanceBefore = await token.balanceOf.call(beneficiary1);
       await tokenVesting.release(token.address);
       let balanceAfterCliff = await token.balanceOf.call(beneficiary1);
-      assert.ok(balanceAfterCliff.minus(balanceBefore).eq(BigNumber(1000000)));
+
+      let difference = balanceAfterCliff - balanceBefore;
+      assert.ok(difference == 1000000);
 
       // 2 months
-      tokenVesting = TokenVesting.at(contracts[1]);
+      tokenVesting = await TokenVesting.at(contracts[1]);
       // Travel to one hour before the cliff period ends.
       await increaseTime(oneMonth - oneHour);
 
@@ -507,10 +494,12 @@ contract('TokenVestingPool', (accounts) => {
       await increaseTime(oneHour);
       await tokenVesting.release(token.address);
       balanceAfterCliff = await token.balanceOf.call(beneficiary1);
-      assert.ok(balanceAfterCliff.minus(balanceBefore).eq(BigNumber('2e+10')));
+
+      difference = balanceAfterCliff - balanceBefore;
+      assert.ok(difference == 2000000);
 
       // 3 months
-      tokenVesting = TokenVesting.at(contracts[2]);
+      tokenVesting = await TokenVesting.at(contracts[2]);
       // Travel to one hour before the cliff period ends.
       await increaseTime(oneMonth - oneHour);
 
@@ -526,7 +515,9 @@ contract('TokenVestingPool', (accounts) => {
       await increaseTime(oneHour);
       await tokenVesting.release(token.address);
       balanceAfterCliff = await token.balanceOf.call(beneficiary1);
-      assert.ok(balanceAfterCliff.minus(balanceBefore).eq(BigNumber('3e+10')));
+
+      difference = balanceAfterCliff - balanceBefore;
+      assert.ok(difference == 3000000);
     });
   });
 });

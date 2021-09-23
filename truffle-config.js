@@ -8,12 +8,12 @@ module.exports = {
     development: {
       host: 'localhost',
       port: 8545,
-      network_id: '*', // eslint-disable-line camelcase
+      network_id: '*',
     },
     ganache: {
       host: 'localhost',
       port: 8545,
-      network_id: '*', // eslint-disable-line camelcase
+      network_id: '*',
     },
     ropsten: {
       provider: function() {

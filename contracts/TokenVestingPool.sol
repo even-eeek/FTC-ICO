@@ -75,7 +75,6 @@ contract TokenVestingPool is Claimable {
    * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
    * @param _duration duration in seconds of the period in which the tokens will vest
    * @param _amount amount array of tokens to be released
-   * @return address for the new TokenVesting contract instance.
    */
   function addBulkBeneficiary(
     address[] memory _beneficiary,
@@ -83,7 +82,7 @@ contract TokenVestingPool is Claimable {
     uint256 _cliff,
     uint256 _duration,
     uint256[] memory _amount
-  ) public onlyOwner returns (address) {
+  ) public onlyOwner {
     require(_beneficiary.length == _amount.length);
     for(uint256 i = 0 ; i < _beneficiary.length; i++) {
       addBeneficiary(_beneficiary[i], _start, _cliff, _duration, _amount[i]);
