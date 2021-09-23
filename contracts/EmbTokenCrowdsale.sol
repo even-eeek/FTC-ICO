@@ -219,7 +219,7 @@ contract EmbTokenCrowdsale is Ownable {
   /**
    * @dev enables token transfers, called when owner calls finalize()
   */
-  function postICOhandling() public {
+  function distributeTokens() public onlyOwner {
     require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
     require(token.totalSupply() == uint256(5000000000).mul(10 ** 18));
 
@@ -317,28 +317,28 @@ contract EmbTokenCrowdsale is Ownable {
     return address(gameEscrow);
   }
 
-  function showFoundationVestedFunds1() public view returns (uint256) {
+  function getFoundationVestedFunds1() public view returns (uint256) {
     require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
 
     address  addressFoundationEscrow1 = getFoundationVestedContract1();
     return token.balanceOf(addressFoundationEscrow1);
   }
 
-  function showFoundationVestedFunds2() public view returns (uint256) {
+  function getFoundationVestedFunds2() public view returns (uint256) {
     require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
 
     address  addressFoundationEscrow2 = getFoundationVestedContract2();
     return token.balanceOf(addressFoundationEscrow2);
   }
 
-  function showTokenSaleVestedFunds(address beneficiary) public view returns (uint256){
+  function getTokenSaleVestedFunds(address beneficiary) public view returns (uint256){
     require(CrowdsaleStage.PostICO == stage, "Trying to call  when PostICO is not active");
 
     address  addressTokenSaleEscrow = getTokenSaleVestedContract(beneficiary);
     return token.balanceOf(addressTokenSaleEscrow);
   }
 
-  function showGameVestedFunds()  public view returns (uint256) {
+  function getGameVestedFunds()  public view returns (uint256) {
     require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
 
     address  addressGameEscrow = getGameVestedContract();

@@ -264,11 +264,11 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
 
   describe('finalize', function() {
     it("prevents calling finalize when PreICO is active", async function()  {
-      await this.crowdsale.postICOhandling({from: this.owner}).should.be.rejectedWith(EVMRevert);
+      await this.crowdsale.distributeTokens({from: this.owner}).should.be.rejectedWith(EVMRevert);
     });
     it("prevents calling finalize when ICO is active", async function()  {
       await this.crowdsale.incrementCrowdsaleStage(this.icoStage, { from: this.owner });
-      await this.crowdsale.postICOhandling({from: this.owner}).should.be.rejectedWith(EVMRevert);
+      await this.crowdsale.distributeTokens({from: this.owner}).should.be.rejectedWith(EVMRevert);
     })
     it("allows calling finalize when PostICO is active", async function()  {
       const value = ether('1');
@@ -280,7 +280,7 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
       await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: this.owner });
 
 
-      await this.crowdsale.postICOhandling({from: this.owner}).should.be.fulfilled;
+      await this.crowdsale.distributeTokens({from: this.owner}).should.be.fulfilled;
     })
   })
 
