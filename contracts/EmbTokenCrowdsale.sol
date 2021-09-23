@@ -3,11 +3,12 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import './TokenVestingPool.sol';
 import "./OZ_legacy/TokenVesting.sol";
 
-contract EmbTokenCrowdsale is Ownable {
+contract EmbTokenCrowdsale is Ownable, Pausable {
   using SafeMath for uint256;
   using SafeERC20 for ERC20;
 
@@ -30,7 +31,6 @@ contract EmbTokenCrowdsale is Ownable {
   mapping(address => uint256) public contributionsWei;
   mapping (uint256 => address ) private holders;
 
-  bool public tokenSalePaused = false;
   uint256 totalSaleTokens;
   uint256 totalHolders;
 
@@ -130,8 +130,7 @@ contract EmbTokenCrowdsale is Ownable {
    * @dev low level token purchase ***DO NOT OVERRIDE***
    * @param _beneficiary Address performing the token purchase
    */
-  function buyTokens(address _beneficiary) public payable {
-    require(tokenSalePaused == false, "Trying to buy when the contract is paused");
+  function buyTokens(address _beneficiary) public payable whenNotPaused {
     require(CrowdsaleStage.PostICO != stage, "Trying to buy tokens when the PostICO stage is active");
 
     if(CrowdsaleStage.PreICO == stage) {
@@ -171,12 +170,12 @@ contract EmbTokenCrowdsale is Ownable {
     }
   }
 
-  function pauseTokenSale() public payable onlyOwner {
-      tokenSalePaused = true;
+  function pause() public payable onlyOwner {
+      _pause();
   }
 
-  function unpauseTokenSale() public payable onlyOwner {
-      tokenSalePaused = false;
+  function unpause() public payable onlyOwner {
+    _unpause();
   }
 
   /**

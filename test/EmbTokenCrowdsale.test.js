@@ -102,21 +102,21 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
   });
 
   describe('crowdsale pause', async function() {
-    it("should be able to call pauseTokenSale() by the owner of tokenSale", async function () {
-        await this.crowdsale.pauseTokenSale({ from: investor1 }).should.be.rejectedWith(EVMRevert);
+    it("should be able to call pause() by the owner of tokenSale", async function () {
+        await this.crowdsale.pause({ from: investor1 }).should.be.rejectedWith(EVMRevert);
 
-        assert.equal(false, await this.crowdsale.tokenSalePaused());
+        assert.equal(false, await this.crowdsale.paused());
     });
 
-    it("should be able to call unpauseTokenSale() by the owner of tokenSale", async function () {
-        await this.crowdsale.pauseTokenSale({ from: this.owner }).should.be.fulfilled;
-        assert.equal(true, await this.crowdsale.tokenSalePaused());
+    it("should be able to call unpause() by the owner of tokenSale", async function () {
+        await this.crowdsale.pause({ from: this.owner }).should.be.fulfilled;
+        assert.equal(true, await this.crowdsale.paused());
 
-        await this.crowdsale.unpauseTokenSale({ from: investor1 }).should.be.rejectedWith(EVMRevert);
-        assert.equal(true, await this.crowdsale.tokenSalePaused());
+        await this.crowdsale.unpause({ from: investor1 }).should.be.rejectedWith(EVMRevert);
+        assert.equal(true, await this.crowdsale.paused());
 
-        await this.crowdsale.unpauseTokenSale({ from: this.owner }).should.be.fulfilled;
-        assert.equal(false, await this.crowdsale.tokenSalePaused());
+        await this.crowdsale.unpause({ from: this.owner }).should.be.fulfilled;
+        assert.equal(false, await this.crowdsale.paused());
     });
   })
 
@@ -195,8 +195,8 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
   describe('buyTokens()', function() {
     describe('when the contract is paused', function() {
       it('rejects the transaction', async function() {
-        await this.crowdsale.pauseTokenSale({ from: this.owner }).should.be.fulfilled;
-        assert.equal(true, await this.crowdsale.tokenSalePaused());
+        await this.crowdsale.pause({ from: this.owner }).should.be.fulfilled;
+        assert.equal(true, await this.crowdsale.paused());
         const value =  this.investorMinCap + 1;
         await this.crowdsale.buyTokens(investor2, { value: value, from: investor2 }).should.be.rejectedWith(EVMRevert);
       });
