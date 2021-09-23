@@ -1,7 +1,7 @@
-const EVMRevert = './utils/EVMRevert';
+const truffleAssert = require('truffle-assertions')
 
 const {
-    assertRevert, assertEvent, increaseTime, now, advanceBlock,
+    assertEvent, increaseTime, now, advanceBlock,
 } = require('./utils/helpers');
 
 require('chai')
@@ -39,21 +39,11 @@ contract('TokenVestingPool', (accounts) => {
 
     describe('#constructor', () => {
         it('does not create an instance of the contract when the token argument is invalid', async () => {
-            try {
-                await TokenVestingPool.new(zeroAddress, 1e12, {from: owner}).should.be.rejectedWith(EVMRevert);
-                // assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(TokenVestingPool.new(zeroAddress, 1e12, {from: owner}), "");
         });
 
         it('does not create an instance of the contract when the total funds are zero', async () => {
-            try {
-                await TokenVestingPool.new(token.address, 0, {from: owner}).should.be.rejectedWith(EVMRevert);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(TokenVestingPool.new(token.address, 0, {from: owner}), "");
         });
 
         it('creates an instance of the contract', async () => {
@@ -72,85 +62,51 @@ contract('TokenVestingPool', (accounts) => {
         });
 
         it('does not add a beneficiary when the beneficiary is the owner', async () => {
-            try {
-                await contract.addBeneficiary(owner, start, oneDay, oneWeek, 1e10, {from: owner}).should.be.rejectedWith(EVMRevert);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(
+                contract.addBeneficiary(owner, start, oneDay, oneWeek, 1e10, {from: owner}), ""
+            );
         });
 
         it('does not add a beneficiary when the address is invalid', async () => {
-            try {
-                await contract.addBeneficiary(zeroAddress, start, oneDay, oneWeek, 1e10, {
-                    from: owner,
-                }).should.be.rejectedWith(EVMRevert);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(
+                contract.addBeneficiary(zeroAddress, start, oneDay, oneWeek, 1e10, {from: owner}), ""
+            );
         });
 
         it('does not add a beneficiary when the beneficiary is the contract itself', async () => {
-            try {
-                await contract.addBeneficiary(contract.address, start, oneDay, oneWeek, 1e10, {
-                    from: owner,
-                }).should.be.rejectedWith(EVMRevert);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(
+                contract.addBeneficiary(contract.address, start, oneDay, oneWeek, 1e10, {from: owner}), ""
+            );
         });
 
         it('does not add a beneficiary when the duration time is lesser than the cliff time', async () => {
-            try {
-                await contract.addBeneficiary(beneficiary1, start, oneWeek, oneDay, 1e10, {
-                    from: owner,
-                }).should.be.rejectedWith(EVMRevert);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(
+                contract.addBeneficiary(beneficiary1, start, oneWeek, oneDay, 1e10, {from: owner}), ""
+            );
         });
 
         it('does not add a beneficiary when the amount of tokens to distribute is more than the total funds', async () => {
-            try {
-                await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1e12, {
-                    from: owner,
-                }).should.be.rejectedWith(EVMRevert);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(
+                contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1e12, {from: owner}), ""
+            );
         });
 
         it('does not add a beneficiary when the token balance is not enough', async () => {
             const anotherContract = await TokenVestingPool.new(token.address, 1e11, {from: owner});
             await token.transfer(anotherContract.address, 1e10);
 
-            try {
-                await anotherContract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1e11, {
-                    from: owner,
-                }).should.be.rejectedWith(EVMRevert);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(
+                anotherContract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1e11, {from: owner}), ""
+            );
         });
 
         it('does not add a beneficiary when amount of tokens is zero', async () => {
-            try {
-                await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 0, {
-                    from: owner,
-                }).should.be.rejectedWith(EVMRevert);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(
+                contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 0, {from: owner}), ""
+            );
         });
 
         it('adds a beneficiary to the token pool', async () => {
-
             const tx = await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1e10, {
                 from: owner,
             }).should.be.fulfilled;
@@ -212,13 +168,9 @@ contract('TokenVestingPool', (accounts) => {
 
         it('previous owner cannot add a beneficiary after the new owner claims ownership', async () => {
             await contract.transferOwnership(newOwner, {from: owner});
-
-            try {
-                await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1e10, {from: owner}).should.be.rejectedWith(EVMRevert);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(
+                contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1e10, {from: owner}), ""
+            );
         });
     });
 
@@ -302,12 +254,7 @@ contract('TokenVestingPool', (accounts) => {
         });
 
         it('does not return the distribution contracts if beneficiary is not a valid address', async () => {
-            try {
-                await contract.getDistributionContracts(zeroAddress);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(contract.getDistributionContracts(zeroAddress), "");
         });
     });
 
@@ -369,12 +316,7 @@ contract('TokenVestingPool', (accounts) => {
 
             assert.equal(await tokenVesting.revocable(), false, 'TokenVesting contract should not be revocable');
 
-            try {
-                await tokenVesting.release(token.address);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(tokenVesting.release(token.address), "");
 
             // Travel to the exact moment when the cliff ends.
             await increaseTime(oneHour);
@@ -393,12 +335,7 @@ contract('TokenVestingPool', (accounts) => {
 
             assert.equal(await tokenVesting.revocable(), false, 'TokenVesting contract should not be revocable');
 
-            try {
-                await tokenVesting.release(token.address);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(tokenVesting.release(token.address), "");
 
             await increaseTime(oneHour);
             await tokenVesting.release(token.address);
@@ -414,12 +351,7 @@ contract('TokenVestingPool', (accounts) => {
 
             assert.equal(await tokenVesting.revocable(), false, 'TokenVesting contract should not be revocable');
 
-            try {
-                await tokenVesting.release(token.address);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(tokenVesting.release(token.address), "");
 
             await increaseTime(oneHour);
             await tokenVesting.release(token.address);
@@ -451,12 +383,7 @@ contract('TokenVestingPool', (accounts) => {
 
             assert.equal(await tokenVesting.revocable(), false, 'TokenVesting contract should not be revocable');
 
-            try {
-                await tokenVesting.release(token.address);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(tokenVesting.release(token.address), "");
 
             // Travel to the exact moment when the cliff ends.
             await increaseTime(oneHour);
@@ -474,12 +401,7 @@ contract('TokenVestingPool', (accounts) => {
 
             assert.equal(await tokenVesting.revocable(), false, 'TokenVesting contract should not be revocable');
 
-            try {
-                await tokenVesting.release(token.address);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(tokenVesting.release(token.address), "");
 
             await increaseTime(oneHour);
             await tokenVesting.release(token.address);
@@ -495,12 +417,7 @@ contract('TokenVestingPool', (accounts) => {
 
             assert.equal(await tokenVesting.revocable(), false, 'TokenVesting contract should not be revocable');
 
-            try {
-                await tokenVesting.release(token.address);
-                //assert.fail();
-            } catch (error) {
-                assertRevert(error);
-            }
+            await truffleAssert.reverts(tokenVesting.release(token.address), "");
 
             await increaseTime(oneHour);
             await tokenVesting.release(token.address);
