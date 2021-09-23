@@ -11,7 +11,7 @@ import './TokenVestingPool.sol';
 import "./OZ_legacy/TokenVesting.sol";
 
 
-contract EmbTokenCrowdsale is Ownable, Pausable {
+contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
@@ -133,7 +133,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable {
      * @dev low level token purchase ***DO NOT OVERRIDE***
      * @param _beneficiary Address performing the token purchase
      */
-    function buyTokens(address _beneficiary) public payable whenNotPaused {
+    function buyTokens(address _beneficiary) public payable whenNotPaused nonReentrant {
         require(CrowdsaleStage.PostICO != stage, "Trying to buy tokens when the PostICO stage is active");
 
         if (CrowdsaleStage.PreICO == stage) {
@@ -221,7 +221,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable {
     /**
      * @dev enables token transfers, called when owner calls finalize()
     */
-    function distributeTokens() public onlyOwner {
+    function distributeTokens() public onlyOwner nonReentrant {
         require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
         require(token.totalSupply() == uint256(5000000000).mul(10 ** 18));
 
