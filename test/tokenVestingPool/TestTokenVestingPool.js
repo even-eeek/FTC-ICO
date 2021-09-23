@@ -196,7 +196,6 @@ contract('TokenVestingPool', (accounts) => {
 
     it('new owner adds a beneficiary after transfering ownership', async () => {
       await contract.transferOwnership(newOwner, { from: owner });
-      // await contract.claimOwnership({ from: newOwner });
 
       const tx = await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1000000, {
         from: newOwner,
@@ -221,7 +220,6 @@ contract('TokenVestingPool', (accounts) => {
 
     it('previous owner cannot add a beneficiary after the new owner claims ownership', async () => {
       await contract.transferOwnership(newOwner, { from: owner });
-      await contract.claimOwnership({ from: newOwner });
 
       try {
         await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1000000, { from: owner }).should.be.rejectedWith(EVMRevert);
