@@ -32,10 +32,10 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
     mapping(address => uint256) public tokenPurchases;
     mapping(address => uint256) public tokenPayments;
-    mapping(uint256 => address) private holders;
+    mapping(uint256 => address) private beneficiaries;
 
     uint256 totalTokensPurchased;
-    uint256 totalHolders;
+    uint256 totalBeneficiaries;
 
     // Crowdsale Stages
     enum CrowdsaleStage {PreICO, ICO, PostICO}
@@ -91,7 +91,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         foundationFund = _foundationFund;
         liquidityAndMarketingFund = _liquidityAndMarketingFund;
         gameFund = _gameFund;
-        totalHolders = 0;
+        totalBeneficiaries = 0;
         rate = _rate;
         token = _token;
         wallet = _wallet;
@@ -163,8 +163,8 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
         tokenPayments[_beneficiary] = _newPayment;
         tokenPurchases[_beneficiary] = _newPurchase;
-        holders[totalHolders] = _beneficiary;
-        totalHolders.add(1);
+        beneficiaries[totalBeneficiaries] = _beneficiary;
+        totalBeneficiaries.add(1);
 
         if (CrowdsaleStage.PreICO == stage && totalTokensPurchased >= token.totalSupply().div(100).mul(3)) {
             incrementCrowdsaleStage(uint256(CrowdsaleStage.ICO));
@@ -248,8 +248,8 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
         tokenSaleEscrow = new TokenVestingPool(token, totalTokensPurchased);
         token.safeTransfer(address(tokenSaleEscrow), totalTokensPurchased);
-        for (uint256 i = 0; i < totalHolders; i++) {
-            address beneficiary = holders[i];
+        for (uint256 i = 0; i < totalBeneficiaries; i++) {
+            address beneficiary = beneficiaries[i];
             uint256 purchase = tokenPurchases[beneficiary];
             tokenSaleEscrow.addBeneficiary(beneficiary, block.timestamp, 30 days, 600 days, purchase);
         }
