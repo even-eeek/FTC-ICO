@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./TimedCrowdsale.sol";
 
 /**
@@ -8,7 +10,7 @@ import "./TimedCrowdsale.sol";
  * @dev Extension of TimedCrowdsale with a one-off finalization action, where one
  * can do extra work after finishing.
  */
-abstract contract FinalizableCrowdsale is TimedCrowdsale {
+abstract contract FinalizableCrowdsale is TimedCrowdsale, Ownable {
     using SafeMath for uint256;
 
     bool private _finalized;
@@ -30,7 +32,7 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
      * @dev Must be called after crowdsale ends, to do some extra finalization
      * work. Calls the contract's finalization function.
      */
-    function finalize() public {
+    function finalize() onlyOwner public {
         require(!_finalized, "FinalizableCrowdsale: already finalized");
         require(hasClosed(), "FinalizableCrowdsale: not closed");
 
