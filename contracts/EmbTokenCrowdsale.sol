@@ -266,53 +266,53 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     }
 
     function getFoundationVestedContract1() public view returns (address) {
-        require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         return address(foundationEscrow1);
     }
 
     function getFoundationVestedContract2() public view returns (address) {
-        require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         return address(foundationEscrow2);
     }
 
     function getTokenSaleVestedContract(address beneficiary) public view returns (address){
-        require(CrowdsaleStage.PostICO == stage, "Trying to call  when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         address[] memory addressTokenSaleEscrow = tokenSaleEscrow.getDistributionContracts(beneficiary);
         return addressTokenSaleEscrow[0];
     }
 
     function getGameVestedContract() public view returns (address) {
-        require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         return address(gameEscrow);
     }
 
     function getFoundationVestedFunds1() public view returns (uint256) {
-        require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         address addressFoundationEscrow1 = getFoundationVestedContract1();
         return token.balanceOf(addressFoundationEscrow1);
     }
 
     function getFoundationVestedFunds2() public view returns (uint256) {
-        require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         address addressFoundationEscrow2 = getFoundationVestedContract2();
         return token.balanceOf(addressFoundationEscrow2);
     }
 
     function getTokenSaleVestedFunds(address beneficiary) public view returns (uint256){
-        require(CrowdsaleStage.PostICO == stage, "Trying to call  when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         address addressTokenSaleEscrow = getTokenSaleVestedContract(beneficiary);
         return token.balanceOf(addressTokenSaleEscrow);
     }
 
     function getGameVestedFunds() public view returns (uint256) {
-        require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         address addressGameEscrow = getGameVestedContract();
         return token.balanceOf(addressGameEscrow);
@@ -320,28 +320,28 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
 
     function releaseFoundationVestedFunds1() public {
-        require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         address addressFoundationEscrow1 = getFoundationVestedContract1();
         TokenVesting(addressFoundationEscrow1).release(token);
     }
 
     function releaseFoundationVestedFunds2() public {
-        require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         address addressFoundationEscrow2 = getFoundationVestedContract2();
         TokenVesting(addressFoundationEscrow2).release(token);
     }
 
     function releaseTokenSaleVestedFunds(address beneficiary) public {
-        require(CrowdsaleStage.PostICO == stage, "Trying to call  when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         address addressTokenSaleEscrow = getTokenSaleVestedContract(beneficiary);
         TokenVesting(addressTokenSaleEscrow).release(token);
     }
 
     function releaseGameVestedFunds() public {
-        require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
+        require(distributionComplete == true, "Tokens have not been distributed yet");
 
         address addressGameEscrow = getGameVestedContract();
         TokenVesting(addressGameEscrow).release(token);
