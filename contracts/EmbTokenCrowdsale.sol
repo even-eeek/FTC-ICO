@@ -162,8 +162,10 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
         if (CrowdsaleStage.PreICO == stage && totalTokensPurchased >= token.totalSupply().div(100).mul(3)) {
             incrementCrowdsaleStage(uint256(CrowdsaleStage.ICO));
+            pause();
         } else if (CrowdsaleStage.ICO == stage && totalTokensPurchased >= token.totalSupply().div(10)) {
             incrementCrowdsaleStage(uint256(CrowdsaleStage.PostICO));
+            pause();
         }
     }
 
