@@ -8,14 +8,14 @@ module.exports = {
     development: {
       host: 'localhost',
       port: 8545,
-      gas: 46987120,
+      gas: 6721975,
       gasPrice: 25000000000,
       network_id: '*',
     },
     ganache: {
       host: 'localhost',
       port: 8545,
-      gas: 469871200,
+      gas: 6721975,
       gasPrice: 25000000000,
       network_id: '*',
     },
@@ -36,6 +36,10 @@ module.exports = {
       version: "^0.8.0",
     }
   },
+  mocha: {
+    reporter: 'eth-gas-reporter'
+  },
+  plugins: ["solidity-coverage"],
   solc: {
     optimizer: {
       enabled: true,

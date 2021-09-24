@@ -35,8 +35,8 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     mapping(address => uint256) public tokenPayments;
     mapping(uint256 => address) private beneficiaries;
 
-    uint256 totalTokensPurchased;
-    uint256 totalBeneficiaries;
+    uint256 public totalTokensPurchased;
+    uint256 public totalBeneficiaries;
 
     // Crowdsale Stages
     enum CrowdsaleStage {PreICO, ICO, PostICO}
@@ -62,7 +62,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     uint256 constant public FOUNDATION_1_ESCROW_DURATION = 300 days;
 
     uint256 constant public FOUNDATION_2_ESCROW_SHARE = 450000000000000000000000000;
-    uint256 constant public FOUNDATION_2_ESCROW_CLIFF = 301 days;
+    uint256 constant public FOUNDATION_2_ESCROW_CLIFF = 30 days;
     uint256 constant public FOUNDATION_2_ESCROW_DURATION = 540 days;
 
     uint256 constant public GAME_ESCROW_CLIFF = 30 days;
@@ -158,7 +158,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         tokenPayments[_beneficiary] = _newPayment;
         tokenPurchases[_beneficiary] = _newPurchase;
         beneficiaries[totalBeneficiaries] = _beneficiary;
-        totalBeneficiaries.add(1);
+        totalBeneficiaries = totalBeneficiaries.add(1);
 
         if (CrowdsaleStage.PreICO == stage && totalTokensPurchased >= token.totalSupply().div(100).mul(3)) {
             incrementCrowdsaleStage(uint256(CrowdsaleStage.ICO));
@@ -217,7 +217,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     */
     function distributeTokens() public onlyOwner nonReentrant {
         require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
-        require(token.totalSupply() == uint256(5000000000).mul(10 ** 18));
+        require(token.totalSupply() == uint256(5000000000).mul(10 ** 18), "Total supply is not 5 Billion");
         require(tokenDistributionComplete == false, "Token distribution already completed.");
 
         token.safeTransfer(liquidityAndMarketingFund, LIQUIDITY_AND_MARKETING_SHARE);
@@ -234,7 +234,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
         foundationEscrow2 = new TokenVesting(
             foundationFund,
-            startEscrowTimestamp,
+            startEscrowTimestamp + FOUNDATION_1_ESCROW_DURATION + 1 days,
             FOUNDATION_2_ESCROW_CLIFF,
             FOUNDATION_2_ESCROW_DURATION,
             false // TokenVesting cannot be revoked

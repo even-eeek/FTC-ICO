@@ -79,8 +79,6 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
      // Transfer token ownership to crowdsale
     await this.token.transferOwnership(this.crowdsale.address);
 
-    // // Advance time to crowdsale start
-    await increaseTimeTo(this.openingTime + 1);
   });
 
   describe('crowdsale', function() {
