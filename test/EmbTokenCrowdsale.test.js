@@ -294,7 +294,7 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
       await this.crowdsale.distributeTokens({from: this.owner}).should.be.fulfilled;
 
       await truffleAssert.reverts(
-          this.crowdsale.distributeTokens({from: this.owner}), "Distribution already completed."
+          this.crowdsale.distributeTokens({from: this.owner}), "Token distribution already completed."
       );
     })
   })

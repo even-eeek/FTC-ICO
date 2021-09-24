@@ -42,7 +42,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     enum CrowdsaleStage {PreICO, ICO, PostICO}
     CrowdsaleStage public stage = CrowdsaleStage.PreICO;
 
-    bool public distributionComplete = false;
+    bool public tokenDistributionComplete = false;
 
     TokenVesting foundationEscrow1;
     TokenVesting foundationEscrow2;
@@ -218,7 +218,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     function distributeTokens() public onlyOwner nonReentrant {
         require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
         require(token.totalSupply() == uint256(5000000000).mul(10 ** 18));
-        require(distributionComplete == false, "Distribution already completed.");
+        require(tokenDistributionComplete == false, "Token distribution already completed.");
 
         token.safeTransfer(liquidityAndMarketingFund, LIQUIDITY_AND_MARKETING_SHARE);
 
@@ -270,57 +270,57 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         token.safeTransfer(address(gameEscrow), gameShare);
 
         _forwardFunds();
-        distributionComplete = true;
+        tokenDistributionComplete = true;
     }
 
     function getFoundationVestedContract1() public view returns (address) {
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         return address(foundationEscrow1);
     }
 
     function getFoundationVestedContract2() public view returns (address) {
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         return address(foundationEscrow2);
     }
 
     function getTokenSaleVestedContract(address beneficiary) public view returns (address){
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         address[] memory addressTokenSaleEscrow = tokenSaleEscrow.getDistributionContracts(beneficiary);
         return addressTokenSaleEscrow[0];
     }
 
     function getGameVestedContract() public view returns (address) {
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         return address(gameEscrow);
     }
 
     function getFoundationVestedFunds1() public view returns (uint256) {
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         address addressFoundationEscrow1 = getFoundationVestedContract1();
         return token.balanceOf(addressFoundationEscrow1);
     }
 
     function getFoundationVestedFunds2() public view returns (uint256) {
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         address addressFoundationEscrow2 = getFoundationVestedContract2();
         return token.balanceOf(addressFoundationEscrow2);
     }
 
     function getTokenSaleVestedFunds(address beneficiary) public view returns (uint256){
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         address addressTokenSaleEscrow = getTokenSaleVestedContract(beneficiary);
         return token.balanceOf(addressTokenSaleEscrow);
     }
 
     function getGameVestedFunds() public view returns (uint256) {
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         address addressGameEscrow = getGameVestedContract();
         return token.balanceOf(addressGameEscrow);
@@ -328,28 +328,28 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
 
     function releaseFoundationVestedFunds1() public {
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         address addressFoundationEscrow1 = getFoundationVestedContract1();
         TokenVesting(addressFoundationEscrow1).release(token);
     }
 
     function releaseFoundationVestedFunds2() public {
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         address addressFoundationEscrow2 = getFoundationVestedContract2();
         TokenVesting(addressFoundationEscrow2).release(token);
     }
 
     function releaseTokenSaleVestedFunds(address beneficiary) public {
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         address addressTokenSaleEscrow = getTokenSaleVestedContract(beneficiary);
         TokenVesting(addressTokenSaleEscrow).release(token);
     }
 
     function releaseGameVestedFunds() public {
-        require(distributionComplete == true, "Tokens have not been distributed yet");
+        require(tokenDistributionComplete == true, "Tokens have not been distributed yet");
 
         address addressGameEscrow = getGameVestedContract();
         TokenVesting(addressGameEscrow).release(token);
