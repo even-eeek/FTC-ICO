@@ -53,7 +53,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     address public foundationFund;
     address public gameFund;
 
-    uint256 startEscrowTimestamp;
+    uint256 public startEscrowTimestamp;
 
     uint256 constant public LIQUIDITY_AND_MARKETING_SHARE = 500000000000000000000000000;
 
