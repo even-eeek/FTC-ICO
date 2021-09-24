@@ -42,6 +42,8 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     enum CrowdsaleStage {PreICO, ICO, PostICO}
     CrowdsaleStage public stage = CrowdsaleStage.PreICO;
 
+    bool public distributionComplete = false;
+
     TokenVesting foundationEscrow1;
     TokenVesting foundationEscrow2;
     TokenVesting gameEscrow;
@@ -214,6 +216,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     function distributeTokens() public onlyOwner nonReentrant {
         require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
         require(token.totalSupply() == uint256(5000000000).mul(10 ** 18));
+        require(distributionComplete == false, "Distribution already completed.");
 
         token.safeTransfer(liquidityAndMarketingFund, LIQUIDITY_AND_MARKETING_SHARE);
 
@@ -259,6 +262,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         token.safeTransfer(address(gameEscrow), gameShare);
 
         _forwardFunds();
+        distributionComplete = true;
     }
 
     function getFoundationVestedContract1() public view returns (address) {

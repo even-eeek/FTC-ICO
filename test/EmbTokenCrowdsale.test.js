@@ -1,6 +1,7 @@
 import ether from './helpers/ether';
 import EVMRevert from './helpers/EVMRevert';
 import { increaseTimeTo, duration } from './helpers/increaseTime';
+const truffleAssert = require('truffle-assertions')
 
 const { BN } = require('@openzeppelin/test-helpers');
 
@@ -279,8 +280,22 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
       await this.crowdsale.incrementCrowdsaleStage(this.icoStage, { from: this.owner });
       await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: this.owner });
 
+      await this.crowdsale.distributeTokens({from: this.owner}).should.be.fulfilled;
+    })
+    it("Does not allow calling distributeTokens twice", async function()  {
+      const value = ether('1');
+      const purchaser = investor2;
+      await this.crowdsale.sendTransaction({ from: investor1, value: value  }).should.be.fulfilled;
+      await this.crowdsale.buyTokens(investor1, { from: purchaser, value: value }).should.be.fulfilled;
+
+      await this.crowdsale.incrementCrowdsaleStage(this.icoStage, { from: this.owner });
+      await this.crowdsale.incrementCrowdsaleStage(this.postIcoStage, { from: this.owner });
 
       await this.crowdsale.distributeTokens({from: this.owner}).should.be.fulfilled;
+
+      await truffleAssert.reverts(
+          this.crowdsale.distributeTokens({from: this.owner}), "Distribution already completed."
+      );
     })
   })
 
