@@ -43,27 +43,27 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
     TokenVesting foundationEscrow1;
     TokenVesting foundationEscrow2;
-    TokenVestingPool tokenSaleEscrow;
     TokenVesting gameEscrow;
+    TokenVestingPool tokenSaleEscrow;
 
     address public liquidityAndMarketingFund;
     address public foundationFund;
     address public gameFund;
 
-    uint256 constant public TOKEN_SALE_LENGTH = 4 weeks;
-    uint256 constant public TOKEN_SALE_PERIODS = 20;
-    uint256 constant public GAME_PERIOD_LENGTH = 52 weeks;
-    uint256 constant public GAME_PERIODS = 7;
+    uint256 startEscrowTimestamp;
 
-    uint256 constant public FCHAIN_FOUNDATION_SHARE_1 = 50000000000000000000000000;
-    uint256 constant public FCHAIN_FOUNDATION_PERIOD_LENGTH_1 = 4 weeks;
-    uint256 constant public FCHAIN_FOUNDATION_PERIODS_1 = 10;
+    uint256 constant public FOUNDATION_1_ESCROW_SHARE = 50000000000000000000000000;
+    uint256 constant public FOUNDATION_1_ESCROW_CLIFF = 30 days;
+    uint256 constant public FOUNDATION_1_ESCROW_DURATION = 300 days;
 
-    uint256 constant public FCHAIN_FOUNDATION_SHARE_2 = 450000000000000000000000000;
-    uint256 constant public FCHAIN_FOUNDATION_PERIOD_LENGTH_2 = 4 weeks;
-    uint256 constant public FCHAIN_FOUNDATION_PERIODS_2 = 18;
+    uint256 constant public FOUNDATION_2_ESCROW_SHARE = 450000000000000000000000000;
+    uint256 constant public FOUNDATION_2_ESCROW_CLIFF = 301 days;
+    uint256 constant public FOUNDATION_2_ESCROW_DURATION = 540 days;
 
     uint256 constant public LIQUIDITY_AND_MARKETING_SHARE = 500000000000000000000000000;
+
+    uint256 constant public CROWDSALE_ESCROW_CLIFF = 30 days;
+    uint256 constant public CROWDSALE_ESCROW_DURATION = 2555 days;
 
     /**
      * Event for token purchase logging
@@ -106,16 +106,6 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     }
 
     /**
-     * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
-     * @param _beneficiary Address performing the token purchase
-     * @param _weiAmount Value in wei involved in the purchase
-     */
-    function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) pure internal {
-        require(_beneficiary != address(0));
-        require(_weiAmount != 0);
-    }
-
-    /**
      * @dev receive function
      */
     receive() external payable {
@@ -142,24 +132,23 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
             require(totalTokensPurchased < token.totalSupply().div(10), "Trying to buy tokens in ICO when all token have been sold");
         }
 
-        uint256 weiAmount = msg.value;
-
+        uint256 _weiAmount = msg.value;
         uint256 _existingPayment = tokenPayments[_beneficiary];
-        uint256 _newPayment = _existingPayment.add(weiAmount);
+        uint256 _newPayment = _existingPayment.add(_weiAmount);
 
+        require(_beneficiary != address(0));
+        require(_weiAmount != 0);
         require(_newPayment >= investorMinCap && _newPayment <= investorHardCap);
 
-        _preValidatePurchase(_beneficiary, weiAmount);
-        weiRaised = weiRaised.add(weiAmount);
+        weiRaised = weiRaised.add(_weiAmount);
 
-        uint256 _tokens = _getTokenAmount(weiAmount);
+        uint256 _tokens = _getTokenAmount(_weiAmount);
         totalTokensPurchased = totalTokensPurchased.add(_tokens);
-
 
         uint256 _existingPurchase = tokenPurchases[_beneficiary];
         uint256 _newPurchase = _existingPurchase.add(_tokens);
 
-        emit TokenPurchase(msg.sender, _beneficiary, weiAmount, _tokens);
+        emit TokenPurchase(msg.sender, _beneficiary, _weiAmount, _tokens);
 
         tokenPayments[_beneficiary] = _newPayment;
         tokenPurchases[_beneficiary] = _newPurchase;
@@ -227,24 +216,24 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
         token.safeTransfer(liquidityAndMarketingFund, LIQUIDITY_AND_MARKETING_SHARE);
 
+        startEscrowTimestamp = block.timestamp;
         foundationEscrow1 = new TokenVesting(
             foundationFund,
-            block.timestamp,
-            30 days,
-            300 days,
+            startEscrowTimestamp,
+            FOUNDATION_1_ESCROW_CLIFF,
+            FOUNDATION_1_ESCROW_DURATION,
             false // TokenVesting cannot be revoked
         );
-        token.safeTransfer(address(foundationEscrow1), FCHAIN_FOUNDATION_SHARE_1);
+        token.safeTransfer(address(foundationEscrow1), FOUNDATION_1_ESCROW_SHARE);
 
         foundationEscrow2 = new TokenVesting(
             foundationFund,
-            block.timestamp + 300 days,
-            1 days,
-            540 days,
+            startEscrowTimestamp,
+            FOUNDATION_2_ESCROW_CLIFF,
+            FOUNDATION_2_ESCROW_DURATION,
             false // TokenVesting cannot be revoked
         );
-        token.safeTransfer(address(foundationEscrow2), FCHAIN_FOUNDATION_SHARE_2);
-
+        token.safeTransfer(address(foundationEscrow2), FOUNDATION_2_ESCROW_SHARE);
 
         tokenSaleEscrow = new TokenVestingPool(token, totalTokensPurchased);
         token.safeTransfer(address(tokenSaleEscrow), totalTokensPurchased);
@@ -255,15 +244,15 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         }
 
         uint256 gameShare = token.totalSupply().sub(totalTokensPurchased);
-        gameShare = gameShare.sub(FCHAIN_FOUNDATION_SHARE_1);
-        gameShare = gameShare.sub(FCHAIN_FOUNDATION_SHARE_2);
+        gameShare = gameShare.sub(FOUNDATION_1_ESCROW_SHARE);
+        gameShare = gameShare.sub(FOUNDATION_2_ESCROW_SHARE);
         gameShare = gameShare.sub(LIQUIDITY_AND_MARKETING_SHARE);
 
         gameEscrow = new TokenVesting(
             gameFund,
-            block.timestamp,
-            30 days,
-            2555 days,
+            startEscrowTimestamp,
+            CROWDSALE_ESCROW_CLIFF,
+            CROWDSALE_ESCROW_DURATION,
             false // TokenVesting cannot be revoked
         );
         token.safeTransfer(address(gameEscrow), gameShare);
