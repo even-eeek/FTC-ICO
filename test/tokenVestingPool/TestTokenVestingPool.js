@@ -154,17 +154,13 @@ contract('TokenVestingPool', (accounts) => {
             assert.equal(status, 1, 'Could not add beneficiary');
         });
 
-        // it('adds a beneficiary from old owner after transferring ownership to new owner', async () => {
-        //   await contract.transferOwnership(newOwner, { from: owner });
-        //
-        //   const tx = await contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1e10, {
-        //     from: owner,
-        //   }).should.be.rejectedWith(EVMRevert);
-        //   assertEvent(tx, 'BeneficiaryAdded', 'Did not emit `BeneficiaryAdded` event');
-        //
-        //   const { receipt: { status } } = tx;
-        //   assert.equal(status, 1, 'Could not add beneficiary');
-        // });
+        it('adds a beneficiary from old owner after transferring ownership to new owner', async () => {
+          await contract.transferOwnership(newOwner, { from: owner });
+
+            await truffleAssert.reverts(
+                contract.addBeneficiary(beneficiary1, start, oneDay, oneWeek, 1e10, {from: owner}), ""
+            );
+        });
 
         it('previous owner cannot add a beneficiary after the new owner claims ownership', async () => {
             await contract.transferOwnership(newOwner, {from: owner});
