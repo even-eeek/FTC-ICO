@@ -126,7 +126,6 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     }
 
     /**
-     * @dev low level token purchase ***DO NOT OVERRIDE***
      * @param _beneficiary Address performing the token purchase
      */
     function buyTokens(address _beneficiary) public payable whenNotPaused nonReentrant {
@@ -214,7 +213,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     }
 
     /**
-     * @dev enables token transfers, called when owner calls finalize()
+     * @dev enables token transfers and escrow creation when ICO is over
     */
     function distributeTokens() public onlyOwner nonReentrant {
         require(CrowdsaleStage.PostICO == stage, "Trying to finalize when PostICO is not active");
