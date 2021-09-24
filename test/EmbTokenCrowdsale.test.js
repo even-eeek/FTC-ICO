@@ -1,6 +1,6 @@
 import ether from './helpers/ether';
 import EVMRevert from './helpers/EVMRevert';
-import { increaseTimeTo, duration } from './helpers/increaseTime';
+import { increaseTimeTo } from './helpers/increaseTime';
 const truffleAssert = require('truffle-assertions')
 
 const { BN } = require('@openzeppelin/test-helpers');
@@ -298,6 +298,4 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
       );
     })
   })
-
-
 });

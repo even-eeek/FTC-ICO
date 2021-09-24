@@ -55,6 +55,8 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
     uint256 startEscrowTimestamp;
 
+    uint256 constant public LIQUIDITY_AND_MARKETING_SHARE = 500000000000000000000000000;
+
     uint256 constant public FOUNDATION_1_ESCROW_SHARE = 50000000000000000000000000;
     uint256 constant public FOUNDATION_1_ESCROW_CLIFF = 30 days;
     uint256 constant public FOUNDATION_1_ESCROW_DURATION = 300 days;
@@ -63,10 +65,11 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     uint256 constant public FOUNDATION_2_ESCROW_CLIFF = 301 days;
     uint256 constant public FOUNDATION_2_ESCROW_DURATION = 540 days;
 
-    uint256 constant public LIQUIDITY_AND_MARKETING_SHARE = 500000000000000000000000000;
+    uint256 constant public GAME_ESCROW_CLIFF = 30 days;
+    uint256 constant public GAME_ESCROW_DURATION = 2555 days;
 
     uint256 constant public CROWDSALE_ESCROW_CLIFF = 30 days;
-    uint256 constant public CROWDSALE_ESCROW_DURATION = 2555 days;
+    uint256 constant public CROWDSALE_ESCROW_DURATION = 600 days;
 
     /**
      * Event for token purchase logging
@@ -244,7 +247,13 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         for (uint256 i = 0; i < totalBeneficiaries; i++) {
             address beneficiary = beneficiaries[i];
             uint256 purchase = tokenPurchases[beneficiary];
-            tokenSaleEscrow.addBeneficiary(beneficiary, block.timestamp, 30 days, 600 days, purchase);
+            tokenSaleEscrow.addBeneficiary(
+                beneficiary,
+                startEscrowTimestamp,
+                CROWDSALE_ESCROW_CLIFF,
+                CROWDSALE_ESCROW_DURATION,
+                purchase
+            );
         }
 
         uint256 gameShare = token.totalSupply().sub(totalTokensPurchased);
@@ -255,8 +264,8 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         gameEscrow = new TokenVesting(
             gameFund,
             startEscrowTimestamp,
-            CROWDSALE_ESCROW_CLIFF,
-            CROWDSALE_ESCROW_DURATION,
+            GAME_ESCROW_CLIFF,
+            GAME_ESCROW_DURATION,
             false // TokenVesting cannot be revoked
         );
         token.safeTransfer(address(gameEscrow), gameShare);
