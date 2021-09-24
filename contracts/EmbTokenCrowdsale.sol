@@ -167,11 +167,11 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         }
     }
 
-    function pause() public payable onlyOwner {
+    function pause() public onlyOwner {
         _pause();
     }
 
-    function unpause() public payable onlyOwner {
+    function unpause() public onlyOwner {
         _unpause();
     }
 
@@ -188,7 +188,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     * @dev Allows admin to update the crowdsale stage
     * @param _stage Crowdsale stage
     */
-    function incrementCrowdsaleStage(uint256 _stage) public onlyOwner {
+    function incrementCrowdsaleStage(uint256 _stage) public onlyOwner nonReentrant {
         require(CrowdsaleStage.PostICO != stage, "Trying to set stage when the PostICO is active");
         require(uint256(stage) == uint256(_stage.sub(1)), "Trying to set stage incorectly");
 
@@ -207,7 +207,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     * @dev Allows admin to update the crowdsale rate
     * @param _rate Crowdsale rate
     */
-    function updateCrowdsaleRate(uint256 _rate) public onlyOwner {
+    function updateCrowdsaleRate(uint256 _rate) public onlyOwner nonReentrant {
         require(CrowdsaleStage.PostICO != stage, "Updating rate postICO not allowed.");
         rate = _rate;
     }
