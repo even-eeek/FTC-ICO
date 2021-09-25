@@ -70,27 +70,6 @@ contract TokenVestingPool is Claimable {
   }
 
   /**
-   * @notice Assigns a token release point to a beneficiary bulk array.
-   * @param _beneficiary address array of the beneficiaries to whom vested tokens are transferred
-   * @param _start the time (as Unix time) at which point vesting starts
-   * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
-   * @param _duration duration in seconds of the period in which the tokens will vest
-   * @param _amount amount array of tokens to be released
-   */
-  function addBulkBeneficiary(
-    address[] memory _beneficiary,
-    uint256 _start,
-    uint256 _cliff,
-    uint256 _duration,
-    uint256[] memory _amount
-  ) public onlyOwner {
-    require(_beneficiary.length == _amount.length);
-    for(uint256 i = 0 ; i < _beneficiary.length; i++) {
-      addBeneficiary(_beneficiary[i], _start, _cliff, _duration, _amount[i]);
-    }
-  }
-
-  /**
    * @notice Assigns a token release point to a beneficiary. A beneficiary can have
    *         many token release points.
    *         Example 1 - Lock-up mode:
