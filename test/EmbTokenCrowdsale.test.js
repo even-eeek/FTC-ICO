@@ -218,6 +218,51 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
         await this.crowdsale.buyTokens(investor1, { value: value2, from: investor1 }).should.be.fulfilled;
       });
     });
+
+    describe('when the investor purchased tokens', function() {
+      it('check there is only 1 beneficiary for 1 call of buyTokens', async function() {
+        const value1 = ether('1');
+        await this.crowdsale.buyTokens(investor1, { value: value1, from: investor1 });
+
+        assert.equal(1, await this.crowdsale.totalBeneficiaries());
+      });
+
+      it('check there are only 2 beneficiary for 2 call of buyTokens', async function() {
+        const value1 = ether('1');
+        await this.crowdsale.buyTokens(investor1, { value: value1, from: investor1 });
+        
+        await this.crowdsale.buyTokens(investor2, { value: value1, from: investor2 }).should.be.fulfilled;
+
+        assert.equal(2, await this.crowdsale.totalBeneficiaries());
+      });
+
+      it('check there is only 1 beneficiary for 2 calls of buyTokens from the same beneficiary', async function() {
+        // First contribution is valid
+        const value1 = ether('1');
+        await this.crowdsale.buyTokens(investor1, { value: value1, from: investor1 });
+        // Second contribution is less than investor cap
+        const value2 = 1; // wei
+        await this.crowdsale.buyTokens(investor1, { value: value2, from: investor1 }).should.be.fulfilled;
+
+
+        assert.equal(1, await this.crowdsale.totalBeneficiaries());
+      });
+
+      it('check there is are 2 beneficiary for 2 calls of buyTokens from the beneficiary1 and 2 from beneficiary2', async function() {
+        const value1 = ether('1');
+        await this.crowdsale.buyTokens(investor1, { value: value1, from: investor1 });
+
+        const value2 = 1;
+        await this.crowdsale.buyTokens(investor1, { value: value2, from: investor1 }).should.be.fulfilled;
+
+        await this.crowdsale.buyTokens(investor2, { value: value1, from: investor2 });
+
+        await this.crowdsale.buyTokens(investor2, { value: value2, from: investor2 }).should.be.fulfilled;
+
+        assert.equal(2, await this.crowdsale.totalBeneficiaries());
+      });
+    });
+
   });
 
   describe('when the total contributions exceed the investor hard cap', function () {

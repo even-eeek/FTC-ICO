@@ -157,8 +157,11 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
         tokenPayments[_beneficiary] = _newPayment;
         tokenPurchases[_beneficiary] = _newPurchase;
-        beneficiaries[totalBeneficiaries] = _beneficiary;
-        totalBeneficiaries = totalBeneficiaries.add(1);
+
+        if(_existingPurchase == 0) {
+          beneficiaries[totalBeneficiaries] = _beneficiary;
+          totalBeneficiaries = totalBeneficiaries.add(1);
+        }
 
         if (CrowdsaleStage.PreICO == stage && totalTokensPurchased >= token.totalSupply().div(100).mul(3)) {
             incrementCrowdsaleStage(uint256(CrowdsaleStage.ICO));
@@ -203,6 +206,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         } else if (uint(CrowdsaleStage.PostICO) == _stage) {
             stage = CrowdsaleStage.PostICO;
         }
+
     }
 
     /**
