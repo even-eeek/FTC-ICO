@@ -356,7 +356,11 @@ contract('EmbTokenCrowdsaleVesting', (accounts) => {
         it('returns the vested funds for a given beneficiary', async () => {
             const value = ether('1');
             const value2 = ether('2');
+
             await crowdsale.buyTokens(beneficiary1, { from: beneficiary1, value: value }).should.be.fulfilled;
+            await crowdsale.buyTokens(beneficiary1, { from: beneficiary1, value: value }).should.be.fulfilled;
+            await crowdsale.buyTokens(beneficiary1, { from: beneficiary1, value: value2 }).should.be.fulfilled;
+
             await crowdsale.buyTokens(beneficiary2, { from: beneficiary2, value: value2 }).should.be.fulfilled;
 
             await crowdsale.incrementCrowdsaleStage(icoStage, { from: owner });
@@ -367,7 +371,7 @@ contract('EmbTokenCrowdsaleVesting', (accounts) => {
             await increaseTime(oneDay * 600);
 
             const funds1 = await crowdsale.getTokenSaleVestedFunds(beneficiary1);
-            funds1.should.be.bignumber.equal('45000000000000000000000');
+            funds1.should.be.bignumber.equal('180000000000000000000000');
 
             const funds2 = await crowdsale.getTokenSaleVestedFunds(beneficiary2);
             funds2.should.be.bignumber.equal('90000000000000000000000');
