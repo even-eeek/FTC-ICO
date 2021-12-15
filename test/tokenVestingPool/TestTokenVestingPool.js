@@ -10,7 +10,7 @@ require('chai')
 
 
 const TokenVestingPool = artifacts.require('TokenVestingPool');
-const ERC20Token = artifacts.require('EmbToken.sol');
+const ERC20Token = artifacts.require('FtcToken.sol');
 const TokenVesting = artifacts.require('TokenVesting');
 
 contract('TokenVestingPool', (accounts) => {
@@ -34,7 +34,7 @@ contract('TokenVestingPool', (accounts) => {
 
     beforeEach(async () => {
         start = await now();
-        token = await ERC20Token.new("Ember Token", "EMB", 18, 5000000000000000, {from: owner});
+        token = await ERC20Token.new("Forgotten Coin", "FTC", 18, 5000000000000000, {from: owner});
     });
 
     describe('#constructor', () => {

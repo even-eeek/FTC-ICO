@@ -9,10 +9,10 @@ require('chai')
   .use(require('chai-as-promised'))
   .should();
 
-const EmbToken = artifacts.require('EmbToken');
-const EmbTokenCrowdsale = artifacts.require('EmbTokenCrowdsale');
+const FtcToken = artifacts.require('FtcToken');
+const FtcTokenCrowdsale = artifacts.require('FtcTokenCrowdsale');
 
-contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundationFund, liquidityAndMarketingFund, gameFund]) {
+contract('FtcTokenCrowdsale', function([_, wallet, investor1, investor2, foundationFund, liquidityAndMarketingFund, gameFund]) {
 
   beforeEach(async function () {
 
@@ -31,13 +31,13 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     this.owner = _;
 
     // Token config
-    this.name = "Ember Token";
-    this.symbol = "EMB";
+    this.name = "Forgotten Coin";
+    this.symbol = "FTC";
     this.decimals = 18;
     this.supply = 5000000000;
 
     // Deploy Token
-    this.token = await EmbToken.new(
+    this.token = await FtcToken.new(
       this.name,
       this.symbol,
       this.decimals,
@@ -62,7 +62,7 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     this.icoRate = 15000;
     this.postIcoStage = 2;
 
-    this.crowdsale = await EmbTokenCrowdsale.new(
+    this.crowdsale = await FtcTokenCrowdsale.new(
       this.preIcoRate,
       this.wallet,
       this.token.address,
@@ -230,7 +230,7 @@ contract('EmbTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
       it('check there are only 2 beneficiary for 2 call of buyTokens', async function() {
         const value1 = ether('1');
         await this.crowdsale.buyTokens(investor1, { value: value1, from: investor1 });
-        
+
         await this.crowdsale.buyTokens(investor2, { value: value1, from: investor2 }).should.be.fulfilled;
 
         assert.equal(2, await this.crowdsale.totalBeneficiaries());

@@ -12,7 +12,7 @@ import './TokenVestingPool.sol';
 import "./OZ_legacy/TokenVesting.sol";
 
 
-contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
+contract FtcTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
@@ -28,8 +28,8 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     // How many wei have been raised
     uint256 public weiRaised;
 
-    uint256 public investorMinCap = 200000000000000000; // 0.2 ether
-    uint256 public investorHardCap = 6000000000000000000; // 6 ether
+    uint256 public investorMinCap = 200000000000000000; // 0.2 bnb
+    uint256 public investorHardCap = 3000000000000000000; // 3 bnb
 
     mapping(address => uint256) public tokenPurchases;
     mapping(address => uint256) public tokenPayments;
@@ -164,10 +164,10 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         }
 
         if (CrowdsaleStage.PreICO == stage && totalTokensPurchased >= token.totalSupply().div(100).mul(3)) {
-            incrementCrowdsaleStage(uint256(CrowdsaleStage.ICO));
+            /* incrementCrowdsaleStage(uint256(CrowdsaleStage.ICO)); */
             _pause();
         } else if (CrowdsaleStage.ICO == stage && totalTokensPurchased >= token.totalSupply().div(10)) {
-            incrementCrowdsaleStage(uint256(CrowdsaleStage.PostICO));
+            /* incrementCrowdsaleStage(uint256(CrowdsaleStage.PostICO)); */
             _pause();
         }
     }
@@ -201,6 +201,7 @@ contract EmbTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
             stage = CrowdsaleStage.PreICO;
             rate = 45000;
         } else if (uint(CrowdsaleStage.ICO) == _stage) {
+            investorHardCap = 8000000000000000000; // 8 bnb
             stage = CrowdsaleStage.ICO;
             rate = 15000;
         } else if (uint(CrowdsaleStage.PostICO) == _stage) {

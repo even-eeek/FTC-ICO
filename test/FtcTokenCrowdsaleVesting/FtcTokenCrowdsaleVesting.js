@@ -12,10 +12,10 @@ require('chai')
     .should();
 
 
-const ERC20Token = artifacts.require('EmbToken.sol');
-const EmbTokenCrowdsale = artifacts.require('EmbTokenCrowdsale');
+const ERC20Token = artifacts.require('FtcToken.sol');
+const FtcTokenCrowdsale = artifacts.require('FtcTokenCrowdsale');
 
-contract('EmbTokenCrowdsaleVesting', (accounts) => {
+contract('FtcTokenCrowdsaleVesting', (accounts) => {
     const owner = accounts[0];
     const wallet = accounts[1];
     const foundationFund = accounts[2];
@@ -54,9 +54,9 @@ contract('EmbTokenCrowdsaleVesting', (accounts) => {
 
     beforeEach(async () => {
         start = await now();
-        token = await ERC20Token.new("Ember Token", "EMB", 18, 5000000000, {from: owner});
+        token = await ERC20Token.new("Forgotten Coin", "FTC", 18, 5000000000, {from: owner});
 
-        crowdsale = await EmbTokenCrowdsale.new(
+        crowdsale = await FtcTokenCrowdsale.new(
           preIcoRate,
           wallet,
           token.address,
@@ -359,7 +359,7 @@ contract('EmbTokenCrowdsaleVesting', (accounts) => {
 
             await crowdsale.buyTokens(beneficiary1, { from: beneficiary1, value: value }).should.be.fulfilled;
             await crowdsale.buyTokens(beneficiary1, { from: beneficiary1, value: value }).should.be.fulfilled;
-            await crowdsale.buyTokens(beneficiary1, { from: beneficiary1, value: value2 }).should.be.fulfilled;
+            // await crowdsale.buyTokens(beneficiary1, { from: beneficiary1, value: value2 }).should.be.fulfilled;
 
             await crowdsale.buyTokens(beneficiary2, { from: beneficiary2, value: value2 }).should.be.fulfilled;
 
@@ -371,7 +371,7 @@ contract('EmbTokenCrowdsaleVesting', (accounts) => {
             await increaseTime(oneDay * 600);
 
             const funds1 = await crowdsale.getTokenSaleVestedFunds(beneficiary1);
-            funds1.should.be.bignumber.equal('180000000000000000000000');
+            funds1.should.be.bignumber.equal('90000000000000000000000');
 
             const funds2 = await crowdsale.getTokenSaleVestedFunds(beneficiary2);
             funds2.should.be.bignumber.equal('90000000000000000000000');

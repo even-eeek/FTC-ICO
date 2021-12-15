@@ -1,5 +1,5 @@
 
-const EmbToken = artifacts.require('EmbToken');
+const FtcToken = artifacts.require('FtcToken');
 const { BN } = require('@openzeppelin/test-helpers');
 
 
@@ -7,14 +7,14 @@ require('chai')
   .should();
 
 
-contract('EmbToken', accounts => {
-  const _name = 'Dapp Token';
-  const _symbol = 'DAPP';
+contract('FtcToken', accounts => {
+  const _name = 'Forgotten Coin';
+  const _symbol = 'FTC';
   const _decimals = 18;
   const _supply = 5000000000;
 
   beforeEach(async function () {
-    this.token = await EmbToken.new(_name, _symbol, _decimals, _supply);
+    this.token = await FtcToken.new(_name, _symbol, _decimals, _supply);
   });
 
   describe('token attributes', function() {

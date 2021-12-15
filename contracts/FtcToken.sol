@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-contract EmbToken is ERC20, Ownable  {
+contract FtcToken is ERC20, Ownable  {
   using SafeMath for uint256;
 
   constructor(

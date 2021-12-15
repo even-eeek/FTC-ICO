@@ -1,13 +1,13 @@
-SPECS - Ember ICO
+SPECS - FTC ICO
 
 
------------------- EMB (Ember Token) ------------------
+------------------ FTC (Forgotten Coin) ------------------
 
-EMB (Ember Token) is an ERC20 token that implements DetailedERC20, StandardToken, Ownable.
+FTC (Forgotten Coin) is an ERC20 token that implements DetailedERC20, StandardToken, Ownable.
 
 fields:
-string _name: Ember Token,
-string _symbol: EMB,
+string _name: Forgotten Coin,
+string _symbol: FTC,
 uint8 _decimals: 18,
 uint256 _amount: 5000000000
 
@@ -23,14 +23,14 @@ uint256 _amount: 5000000000
 
 - There are 3 stages: enum CrowdsaleStage { PreICO, ICO, PostICO }
 
-	* In PreIco, the rate is $0.01 for 1 EMB i.e. 36900 EMB for 1 BNB (At the time of writing. The rate will be ajusted constantly for BNB price). The limit is 3% of totalSupply i.e. 150000000. Any remaining tokens in PreICO will be available in ICO.
-	* In Ico, the rate is $0.03 for 1 EMB i.e. 12300 EMB for 1 BNB (At the time of writing. The rate will be ajusted constantly for BNB price). The limit is 7% of totalSupply i.e. 350000000. Any remaining tokens in ICO will be sent to GameVesting Contract.
+	* In PreIco, the rate is $0.01 for 1 FTC i.e. 36900 FTC for 1 BNB (At the time of writing. The rate will be adjusted constantly for BNB price). The limit is 3% of totalSupply i.e. 150000000. Any remaining tokens in PreICO will be available in ICO.
+	* In Ico, the rate is $0.03 for 1 FTC i.e. 12300 FTC for 1 BNB (At the time of writing. The rate will be adjusted constantly for BNB price). The limit is 7% of totalSupply i.e. 350000000. Any remaining tokens in ICO will be sent to GameVesting Contract.
 	* in PostIco, the tokenBuy will be disabled
 
 - There is a investorMinCap =  200000000000000000 wei (0.2 BNB) and investorHardCap = 6000000000000000000 wei (6 BNB).
 
 - The contract has some important variables to keep the state of each investor and the contributed amount:
-	mapping(address => uint256) public tokenPurchases -> a mapping to determine the amount of EMB tokens for an investor
+	mapping(address => uint256) public tokenPurchases -> a mapping to determine the amount of FTC tokens for an investor
 	mapping(address => uint256) public tokenPayments -> a mapping to determine the amount paid in wei by an investor
 	mapping(uint256 => address) private beneficiaries -> a mapping to determine beneficiaries
 
@@ -46,7 +46,7 @@ uint256 _amount: 5000000000
 	  ***** TokenVestingPool *****
 
 		The TokenVestingPool Contract constructor has 2 fields:
-			ERC20Basic _token -> our EmbToken
+			ERC20Basic _token -> our FTCToken
 			uint256 _totalFunds -> total tokens for vesting contract
 
 		When a beneficiary is added to a vesting contract, these are the fields that need to be filled up:
