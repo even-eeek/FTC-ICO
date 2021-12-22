@@ -27,7 +27,8 @@ uint256 _amount: 5000000000
 	* In Ico, the rate is $0.03 for 1 FTC i.e. 12300 FTC for 1 BNB (At the time of writing. The rate will be adjusted constantly for BNB price). The limit is 7% of totalSupply i.e. 350000000. Any remaining tokens in ICO will be sent to GameVesting Contract.
 	* in PostIco, the tokenBuy will be disabled
 
-- There is a investorMinCap =  200000000000000000 wei (0.2 BNB) and investorHardCap = 6000000000000000000 wei (6 BNB).
+- In PreICO - There is a investorMinCap =  200000000000000000 wei (0.2 BNB) and investorHardCap = 3000000000000000000 wei (3 BNB).
+- In ICO - There is a investorMinCap =  200000000000000000 wei (0.2 BNB) and investorHardCap = 8000000000000000000 wei (8 BNB).
 
 - The contract has some important variables to keep the state of each investor and the contributed amount:
 	mapping(address => uint256) public tokenPurchases -> a mapping to determine the amount of FTC tokens for an investor
