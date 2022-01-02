@@ -1,9 +1,7 @@
-SPECS - FTC ICO
 
+------------------------------------ FTC (Forgotten Coin) ------------------------------------
 
------------------- FTC (Forgotten Coin) ------------------
-
-FTC (Forgotten Coin) is an ERC20 token that implements DetailedERC20, StandardToken, Ownable.
+FTC (Forgotten Coin) is an ERC20 token on the BSC blockchain.
 
 fields:
 string _name: Forgotten Coin,
