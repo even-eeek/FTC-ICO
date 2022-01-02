@@ -28,7 +28,7 @@ uint256 _amount: 5000000000
 	* in PostIco, the tokenBuy will be disabled
 
 - In PreICO - There is a investorMinCap =  200000000000000000 wei (0.2 BNB) and investorHardCap = 3000000000000000000 wei (3 BNB).
-- In ICO - There is a investorMinCap =  200000000000000000 wei (0.2 BNB) and investorHardCap = 8000000000000000000 wei (8 BNB).
+- In ICO - There is a investorMinCap =  200000000000000000 wei (0.2 BNB) and investorHardCap = 10000000000000000000 wei (10 BNB).
 
 - The contract has some important variables to keep the state of each investor and the contributed amount:
 	mapping(address => uint256) public tokenPurchases -> a mapping to determine the amount of FTC tokens for an investor

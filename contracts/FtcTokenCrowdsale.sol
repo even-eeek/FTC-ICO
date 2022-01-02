@@ -201,7 +201,7 @@ contract FtcTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
             stage = CrowdsaleStage.PreICO;
             rate = 45000;
         } else if (uint(CrowdsaleStage.ICO) == _stage) {
-            investorHardCap = 8000000000000000000; // 8 bnb
+            investorHardCap = 10000000000000000000; // 10 bnb
             stage = CrowdsaleStage.ICO;
             rate = 15000;
         } else if (uint(CrowdsaleStage.PostICO) == _stage) {
