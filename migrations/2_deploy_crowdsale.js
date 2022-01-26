@@ -13,9 +13,9 @@ module.exports = async function(deployer, network, accounts) {
   const _rate                        = 45000;
   const _wallet                      = accounts[0];
   const _token                       = deployedToken.address;
-  const _foundationFund              = accounts[4];
-  const _liquidityAndMarketingFund   = accounts[5];
-  const _gameFund                    = accounts[6];
+  const _foundationFund              = accounts[0];
+  const _liquidityAndMarketingFund   = accounts[0];
+  const _gameFund                    = accounts[0];
 
   await deployer.deploy(
     FtcTokenCrowdsale,

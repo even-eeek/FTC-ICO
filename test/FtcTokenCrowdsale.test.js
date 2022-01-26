@@ -191,6 +191,25 @@ contract('FtcTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     });
   });
 
+
+
+  describe('accepting payments after increasing the Crowdsale ', function() {
+    it('should accept payments after increasing the Crowdsale HardCap to 20 BNB', async function() {
+      const value = ether('19');
+      const purchaser = investor2;
+      await this.crowdsale.updateCrowdsaleHardCap20BNB({ from: this.owner }).should.be.fulfilled;
+      await this.crowdsale.sendTransaction({ from: investor1, value: value  }).should.be.fulfilled;
+      await this.crowdsale.buyTokens(investor1, { from: purchaser, value: value }).should.be.fulfilled;
+    });
+      it('should accept payments after increasing the Crowdsale HardCap to 30 BNB', async function() {
+        const value = ether('29');
+        const purchaser = investor2;
+        await this.crowdsale.updateCrowdsaleHardCap30BNB({ from: this.owner }).should.be.fulfilled;
+        await this.crowdsale.sendTransaction({ from: investor1, value: value  }).should.be.fulfilled;
+        await this.crowdsale.buyTokens(investor1, { from: purchaser, value: value }).should.be.fulfilled;
+      });
+  });
+
   describe('buyTokens()', function() {
     describe('when the contract is paused', function() {
       it('rejects the transaction', async function() {

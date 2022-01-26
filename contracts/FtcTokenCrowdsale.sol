@@ -68,8 +68,8 @@ contract FtcTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     uint256 constant public GAME_ESCROW_CLIFF = 30 days;
     uint256 constant public GAME_ESCROW_DURATION = 2555 days;
 
-    uint256 constant public CROWDSALE_ESCROW_CLIFF = 30 days;
-    uint256 constant public CROWDSALE_ESCROW_DURATION = 600 days;
+    uint256 constant public CROWDSALE_ESCROW_CLIFF = 1 minutes;
+    uint256 constant public CROWDSALE_ESCROW_DURATION = 1 days;
 
     /**
      * Event for token purchase logging
@@ -217,6 +217,20 @@ contract FtcTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     function updateCrowdsaleRate(uint256 _rate) public onlyOwner nonReentrant {
         require(CrowdsaleStage.PostICO != stage, "Updating rate postICO not allowed.");
         rate = _rate;
+    }
+
+    /**
+    * @dev Allows admin to update the crowdsale rate
+    */
+    function updateCrowdsaleHardCap20BNB() public onlyOwner nonReentrant {
+        investorHardCap = 20000000000000000000; // 20 bnb
+    }
+
+    /**
+    * @dev Allows admin to update the crowdsale rate
+    */
+    function updateCrowdsaleHardCap30BNB() public onlyOwner nonReentrant {
+        investorHardCap = 30000000000000000000; // 20 bnb
     }
 
     /**
