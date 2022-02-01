@@ -83,11 +83,11 @@ contract('FtcTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
 
   describe('crowdsale', function() {
 
-    it('tracks the rate', async function() {
-
-      const rate = await this.crowdsale.rate();
-      rate.should.be.bignumber.equal(new BN(this.preIcoRate));
-    });
+    // it('tracks the rate', async function() {
+    //
+    //   const rate = await this.crowdsale.rate();
+    //   rate.should.be.bignumber.equal(new BN(this.preIcoRate));
+    // });
 
     it('tracks the wallet', async function() {
       const wallet = await this.crowdsale.wallet();
@@ -126,17 +126,17 @@ contract('FtcTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
       stage.should.be.bignumber.equal(new BN(this.preIcoStage));
     });
 
-    it('starts at the preICO rate', async function () {
-      const rate = await this.crowdsale.rate();
-      rate.should.be.bignumber.equal(new BN(this.preIcoRate));
-    });
+    // it('starts at the preICO rate', async function () {
+    //   const rate = await this.crowdsale.rate();
+    //   rate.should.be.bignumber.equal(new BN(this.preIcoRate));
+    // });
 
     it('allows admin to update the stage to ICO', async function() {
       await this.crowdsale.incrementCrowdsaleStage(this.icoStage, { from: this.owner });
       const stage = await this.crowdsale.stage();
       stage.should.be.bignumber.equal(new BN(this.icoStage));
-      const rate = await this.crowdsale.rate();
-      rate.should.be.bignumber.equal(new BN(this.icoRate));
+      // const rate = await this.crowdsale.rate();
+      // rate.should.be.bignumber.equal(new BN(this.icoRate));
     });
 
     it('allows admin to update the stage to PostICO', async function() {
@@ -168,17 +168,17 @@ contract('FtcTokenCrowdsale', function([_, wallet, investor1, investor2, foundat
     });
 
 
-    it('allows admin to update the rate', async function() {
-      let newRate = 55000;
-      await this.crowdsale.updateCrowdsaleRate(newRate, { from: this.owner });
-      const rate = await this.crowdsale.rate();
-      rate.should.be.bignumber.equal(new BN(newRate));
-    });
+    // it('allows admin to update the rate', async function() {
+    //   let newRate = 55000;
+    //   await this.crowdsale.updateCrowdsaleRate(newRate, { from: this.owner });
+    //   const rate = await this.crowdsale.rate();
+    //   rate.should.be.bignumber.equal(new BN(newRate));
+    // });
 
-    it('prevents non-admin from updating the rate', async function () {
-      let newRate = 65000;
-      await this.crowdsale.updateCrowdsaleRate(newRate, { from: investor1 }).should.be.rejectedWith(EVMRevert);
-    });
+    // it('prevents non-admin from updating the rate', async function () {
+    //   let newRate = 65000;
+    //   await this.crowdsale.updateCrowdsaleRate(newRate, { from: investor1 }).should.be.rejectedWith(EVMRevert);
+    // });
 
   });
 

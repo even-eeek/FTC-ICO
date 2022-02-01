@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -15,6 +16,11 @@ import "./OZ_legacy/TokenVesting.sol";
 contract FtcTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
+
+    AggregatorV3Interface internal priceFeed;
+    //false means ChainLink getLatestPrice. true means price set by owner
+    bool public priceFlag = false;
+    uint256 public ownerPrice = 0;
 
     // The token being sold
     ERC20 public token;
@@ -101,14 +107,57 @@ contract FtcTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
         rate = _rate;
         token = _token;
         wallet = _wallet;
+
+        /**
+        * Network: Binance Smart Chain
+        * Aggregator: BNB/USD
+        * Address: 0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE
+        */
+        /* priceFeed = AggregatorV3Interface(0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE); //mainnet */
+        priceFeed = AggregatorV3Interface(0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526); //testnet
+    }
+
+    /**
+     * Returns the latest price
+     */
+    function getLatestPrice() public view returns (int) {
+        (
+            uint80 roundID,
+            int price,
+            uint startedAt,
+            uint timeStamp,
+            uint80 answeredInRound
+        ) = priceFeed.latestRoundData();
+        return price;
+    }
+
+    function setOwnerPrice(uint256 _ownerPrice) public onlyOwner {
+      if(_ownerPrice == 0 ) {
+        ownerPrice = uint256(getLatestPrice());
+        priceFlag = false;
+      } else {
+        ownerPrice = _ownerPrice;
+        priceFlag = true;
+      }
     }
 
     /**
      * @param _weiAmount Value in wei to be converted into tokens
      * @return Number of tokens that can be purchased with the specified _weiAmount
      */
-    function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-        return _weiAmount.mul(rate);
+    function _getTokenAmount(uint256 _weiAmount) internal returns (uint256) {
+        if(!priceFlag) {
+          ownerPrice = uint256(getLatestPrice());
+        }
+
+        uint256 newRate = 0;
+        if (CrowdsaleStage.PreICO == stage) {
+          newRate = ownerPrice.mul(100);
+        } else if (CrowdsaleStage.ICO == stage) {
+          newRate = ownerPrice.mul(100).div(3);
+        }
+
+        return _weiAmount.mul(newRate);
     }
 
     /**
@@ -199,11 +248,17 @@ contract FtcTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
 
         if (uint(CrowdsaleStage.PreICO) == _stage) {
             stage = CrowdsaleStage.PreICO;
-            rate = 45000;
+            /* if(!priceFlag) {
+              ownerPrice = uint256(getLatestPrice());
+            }
+            rate = ownerPrice.mul(100); */
         } else if (uint(CrowdsaleStage.ICO) == _stage) {
             investorHardCap = 10000000000000000000; // 10 bnb
             stage = CrowdsaleStage.ICO;
-            rate = 15000;
+            /* if(!priceFlag) {
+              ownerPrice = uint256(getLatestPrice());
+            }
+            rate = ownerPrice.mul(100).div(3); */
         } else if (uint(CrowdsaleStage.PostICO) == _stage) {
             stage = CrowdsaleStage.PostICO;
         }
