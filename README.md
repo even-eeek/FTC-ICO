@@ -1,1 +1,1 @@
-forgottenchain.com ICO
+https://forgottenchain.com/ ICO
