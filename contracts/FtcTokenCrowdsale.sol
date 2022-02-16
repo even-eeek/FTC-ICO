@@ -74,8 +74,8 @@ contract FtcTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     uint256 constant public GAME_ESCROW_CLIFF = 30 days;
     uint256 constant public GAME_ESCROW_DURATION = 2555 days;
 
-    uint256 constant public CROWDSALE_ESCROW_CLIFF = 1 minutes;
-    uint256 constant public CROWDSALE_ESCROW_DURATION = 1 days;
+    uint256 constant public CROWDSALE_ESCROW_CLIFF = 30 days;
+    uint256 constant public CROWDSALE_ESCROW_DURATION = 600 days;
 
     /**
      * Event for token purchase logging
@@ -120,7 +120,7 @@ contract FtcTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
     /**
      * Returns the latest price
      */
-    function getLatestPrice() public view returns (int) {
+    function getLatestPrice() public view returns (uint256) {
         (
             uint80 roundID,
             int price,
@@ -128,7 +128,7 @@ contract FtcTokenCrowdsale is Ownable, Pausable, ReentrancyGuard {
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeed.latestRoundData();
-        return price;
+        return uint256(price).div(100000000);
     }
 
     function setOwnerPrice(uint256 _ownerPrice) public onlyOwner {

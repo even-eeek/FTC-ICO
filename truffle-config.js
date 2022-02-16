@@ -3,7 +3,7 @@ require('babel-polyfill');
 require('dotenv').config();
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 
-var mnemonic = 'shine drama time sustain black blur safe candy problem hedgehog conduct good';
+var mnemonic = 'diagram tray staff middle solution melt return essence nuclear inmate nephew mango';
 
 module.exports = {
   networks: {
@@ -18,13 +18,14 @@ module.exports = {
      skipDryRun: true
    },
    testnet: {
-     provider: () => new HDWalletProvider(mnemonic, `https://data-seed-prebsc-1-s1.binance.org:8545`),
+     provider: () => new HDWalletProvider(mnemonic, `https://speedy-nodes-nyc.moralis.io/0eda99aaac6754efba79817e/bsc/testnet`),
      network_id: 97,
      gas: 6721975,
      gasPrice: 25000000000,
      // confirmations: 10,
      timeoutBlocks: 200,
-     skipDryRun: true
+     skipDryRun: true,
+     // networkCheckTimeout: 10000
    },
     development: {
       host: 'testnet',
