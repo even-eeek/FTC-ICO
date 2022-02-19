@@ -3,12 +3,13 @@ require('babel-polyfill');
 require('dotenv').config();
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 
-var mnemonic = 'diagram tray staff middle solution melt return essence nuclear inmate nephew mango';
+var mnemonic = '';
 
 module.exports = {
   networks: {
 
     bsc: {
+      //https://speedy-nodes-nyc.moralis.io/0eda99aaac6754efba79817e/bsc/mainnet
      provider: () => new HDWalletProvider(mnemonic, 'https://bsc-dataseed.binance.org'),
      network_id: 56,
      gas: 6721975,
